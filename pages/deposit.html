@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deposit Funds</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Add EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("g4dU-gdpiGoL3yIER");
+        })();
+    </script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-2xl p-8">
+            <h1 class="text-3xl font-bold mb-6 text-center text-purple-500">Deposit Funds</h1>
+            
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4">Deposit Methods</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button class="crypto-method bg-gray-700 p-4 rounded-lg hover:bg-purple-700 transition crypto-selected" data-currency="BTC">
+                        <img src="../download__1_-removebg-preview.png" alt="Bitcoin" class="w-12 h-12 mx-auto mb-2">
+                        <p class="text-center">Bitcoin (BTC)</p>
+                    </button>
+                    <button class="crypto-method bg-gray-700 p-4 rounded-lg hover:bg-purple-700 transition" data-currency="ETH">
+                        <img src="../download-removebg-preview.png" alt="Ethereum" class="w-12 h-12 mx-auto mb-2">
+                        <p class="text-center">Ethereum (ETH)</p>
+                    </button>
+                    <button class="crypto-method bg-gray-700 p-4 rounded-lg hover:bg-purple-700 transition" data-currency="USDT">
+                        <img src="../download__1_-removebg-preview (1).png" alt="Tether" class="w-12 h-12 mx-auto mb-2">
+                        <p class="text-center">Tether (USDT)</p>
+                    </button>
+                </div>
+            </div>
+
+            <div id="deposit-details" class="mt-6">
+                <form id="deposit-form" class="bg-gray-700 p-6 rounded-lg">
+                    <h3 class="text-xl font-semibold mb-4">Deposit Instructions</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Wallet Address</label>
+                            <div class="flex items-center">
+                                <input 
+                                    type="text" 
+                                    id="wallet-address" 
+                                    class="w-full bg-gray-600 text-white p-3 rounded-l-lg" 
+                                    value="1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa" 
+                                    readonly
+                                >
+                                <button 
+                                    type="button"
+                                    id="copy-address" 
+                                    class="bg-purple-600 text-white px-4 py-3 rounded-r-lg hover:bg-purple-700 transition"
+                                >
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                            <input 
+                                type="text" 
+                                id="user-name" 
+                                name="user-name"
+                                class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                                placeholder="Enter your name"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Deposit Amount (USD)</label>
+                            <input 
+                                type="number" 
+                                id="deposit-amount" 
+                                name="deposit-amount"
+                                class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                                placeholder="Enter deposit amount"
+                                min="50"
+                                required
+                            >
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Proof of Transaction Link</label>
+                            <input 
+                                type="url" 
+                                id="transaction-proof-link" 
+                                name="transaction-proof-link"
+                                class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                                placeholder="Enter link to your transaction proof (image or document)"
+                                required
+                            >
+                            <p class="text-sm text-gray-400 mt-2">
+                                Please provide a link to an image or document showing proof of your transaction
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Transaction Hash/ID</label>
+                            <input 
+                                type="text" 
+                                id="transaction-hash" 
+                                name="transaction-hash"
+                                class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                                placeholder="Enter transaction hash/ID"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        id="submit-deposit" 
+                        class="w-full mt-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition"
+                    >
+                        Submit Deposit Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Crypto Method Selection
+        let selectedCurrency = "BTC"; // Default selection
+        document.querySelectorAll('.crypto-method').forEach(method => {
+            method.addEventListener('click', () => {
+                // Remove selected class from all methods
+                document.querySelectorAll('.crypto-method').forEach(m => m.classList.remove('crypto-selected'));
+                
+                // Add selected class to clicked method
+                method.classList.add('crypto-selected');
+                selectedCurrency = method.dataset.currency;
+            });
+        });
+
+        // Copy Wallet Address
+        document.getElementById('copy-address').addEventListener('click', () => {
+            const walletAddress = document.getElementById('wallet-address');
+            navigator.clipboard.writeText(walletAddress.value).then(() => {
+                alert('Wallet address copied to clipboard');
+            });
+        });
+
+        // Submit Deposit Request with EmailJS
+        document.getElementById('deposit-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const userName = document.getElementById('user-name').value;
+            const amount = document.getElementById('deposit-amount').value;
+            const proofLink = document.getElementById('transaction-proof-link').value;
+            const transactionHash = document.getElementById('transaction-hash').value;
+            
+            // Basic validation
+            if (!selectedCurrency) {
+                alert('Please select a cryptocurrency');
+                return;
+            }
+
+            if (!userName) {
+                alert('Please enter your name');
+                return;
+            }
+
+            if (!amount || parseFloat(amount) < 50) {
+                alert('Minimum deposit is $50');
+                return;
+            }
+
+            if (!proofLink) {
+                alert('Please enter a link to your proof of transaction');
+                return;
+            }
+
+            if (!transactionHash) {
+                alert('Please enter transaction hash/ID');
+                return;
+            }
+
+            // Show loading state
+            const submitButton = document.getElementById('submit-deposit');
+            const originalButtonText = submitButton.textContent;
+            submitButton.textContent = 'Processing...';
+            submitButton.disabled = true;
+
+            try {
+                // Current timestamp
+                const currentTimestamp = new Date().toLocaleString();
+                
+                // Prepare EmailJS parameters
+                const templateParams = {
+                    name: userName,
+                    title: "Cryptocurrency Deposit",
+                    cryptocurrency: selectedCurrency,
+                    amount: amount,
+                    transaction_hash: transactionHash,
+                    current_timestamp: currentTimestamp,
+                    proof_link: proofLink,
+                    to_email: "justiceofficial@gmail.com"
+                };
+
+                // Send email using EmailJS
+                await emailjs.send(
+                    'service_538bgur', 
+                    'template_zzwo3cj', 
+                    templateParams, 
+                    'g4dU-gdpiGoL3yIER'
+                );
+
+                alert('Deposit request submitted successfully! We will process your request within 3 business days.');
+                document.getElementById('deposit-form').reset();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit deposit request. Please try again later.');
+            } finally {
+                // Restore button state
+                submitButton.textContent = originalButtonText;
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

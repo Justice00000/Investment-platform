@@ -1,0 +1,121 @@
+/* Investment Page Styles */
+:root {
+    --bg-primary: #1a202c;
+    --bg-secondary: #2d3748;
+    --text-primary: #e2e8f0;
+    --accent-purple: #8a4fff;
+    --accent-pink: #ff6b9e;
+    --gradient-primary: linear-gradient(135deg, #8a4fff, #ff6b9e);
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', 'Arial', sans-serif;
+}
+
+.investment-card {
+    background-color: var(--bg-secondary);
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.investment-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+}
+
+.investment-plan-header {
+    background: var(--gradient-primary);
+    color: white;
+    padding: 1rem;
+    border-top-left-radius: 1rem;
+    border-top-right-radius: 1rem;
+}
+
+.roi-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 1.5rem;
+}
+
+.investment-calculator {
+    background-color: var(--bg-secondary);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.calculator-result {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .investment-card {
+        margin-bottom: 1.5rem;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+/* Input Styles */
+.investment-input {
+    background-color: rgba(45, 55, 72, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.investment-input:focus {
+    border-color: var(--accent-purple);
+    box-shadow: 0 0 0 3px rgba(138, 79, 255, 0.2);
+}
+
+/* Buttons */
+.invest-button {
+    background: var(--gradient-primary);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.invest-button:hover {
+    opacity: 0.9;
+    transform: scale(1.02);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-purple);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-pink);
+}

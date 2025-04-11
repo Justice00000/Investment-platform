@@ -1,0 +1,60 @@
+/* Dashboard Specific Styles */
+body {
+    background-color: #1a202c;
+    color: #e2e8f0;
+    font-family: 'Arial', sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-purple {
+    background: linear-gradient(135deg, #8a4fff, #5f3aff);
+}
+
+.bg-gradient-blue {
+    background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+}
+
+.bg-gradient-green {
+    background: linear-gradient(135deg, #11998e, #38ef7d);
+}
+
+/* Hover Effects */
+.hover-lift {
+    transition: transform 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2d3748;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}

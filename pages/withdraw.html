@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-gray-800 rounded-xl shadow-2xl p-8">
+            <h1 class="text-3xl font-bold mb-6 text-center text-purple-500">Withdraw Funds</h1>
+            
+            <div class="bg-gray-700 p-6 rounded-lg mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-xl font-semibold">Available Balance</span>
+                    <span class="text-2xl font-bold text-green-500">$6,060.00</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-700 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">Withdrawal Details</h2>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Withdrawal Method</label>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <button class="withdrawal-method bg-gray-600 p-4 rounded-lg hover:bg-purple-700 transition withdrawal-selected" data-method="crypto">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            <p class="text-center">Cryptocurrency</p>
+                        </button>
+                        <button class="withdrawal-method bg-gray-600 p-4 rounded-lg hover:bg-purple-700 transition" data-method="bank">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <p class="text-center">Bank Transfer</p>
+                        </button>
+                        <button class="withdrawal-method bg-gray-600 p-4 rounded-lg hover:bg-purple-700 transition" data-method="paypal">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <p class="text-center">PayPal</p>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="crypto-details">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Cryptocurrency</label>
+                        <select class="w-full bg-gray-600 text-white p-3 rounded-lg">
+                            <option>Bitcoin (BTC)</option>
+                            <option>Ethereum (ETH)</option>
+                            <option>Tether (USDT)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Wallet Address</label>
+                        <input 
+                            type="text" 
+                            class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                            placeholder="Enter your cryptocurrency wallet address"
+                        >
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Withdrawal Amount</label>
+                    <input 
+                        type="number" 
+                        class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                        placeholder="Enter withdrawal amount"
+                        min="50"
+                        max="6060"
+                    >
+                    <p class="text-sm text-gray-400 mt-2">Minimum withdrawal: $50</p>
+                </div>
+
+                <button 
+                    id="submit-withdrawal" 
+                    class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition"
+                >
+                    Submit Withdrawal Request
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Withdrawal Method Selection
+        document.querySelectorAll('.withdrawal-method').forEach(method => {
+            method.addEventListener('click', () => {
+                // Remove selected class from all methods
+                document.querySelectorAll('.withdrawal-method').forEach(m => m.classList.remove('withdrawal-selected'));
+                
+                // Add selected class to clicked method
+                method.classList.add('withdrawal-selected');
+            });
+        });
+
+        // Submit Withdrawal Request
+        document.getElementById('submit-withdrawal').addEventListener('click', () => {
+            const selectedMethod = document.querySelector('.withdrawal-selected').dataset.method;
+            const amount = document.querySelector('input[type="number"]').value;
+
+            // Basic validation
+            if (!selectedMethod) {
+                alert('Please select a withdrawal method');
+                return;
+            }
+
+            if (!amount || parseFloat(amount) < 50) {
+                alert('Minimum withdrawal is $50');
+                return;
+            }
+
+            if (parseFloat(amount) > 6060) {
+                alert('Withdrawal amount exceeds available balance');
+                return;
+            }
+
+            // In a real application, this would send data to backend
+            alert(`Withdrawal Request Submitted
+Method: ${selectedMethod}
+Amount: $${amount}`);
+        });
+    </script>
+</body>
+</html>

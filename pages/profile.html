@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-4xl mx-auto bg-gray-800 rounded-xl shadow-2xl p-8">
+            <div class="flex items-center mb-8">
+                <div class="w-24 h-24 bg-purple-500 rounded-full flex items-center justify-center mr-6">
+                    <span id="profile-initials" class="text-4xl font-bold">CC</span>
+                </div>
+                <div>
+                    <input 
+                        id="full-name-input" 
+                        type="text" 
+                        value="Charles Crowther" 
+                        class="text-3xl font-bold text-purple-400 bg-transparent border-b border-transparent hover:border-purple-400 focus:border-purple-400 transition-all"
+                    >
+                    <p class="text-gray-400">Investor</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <div>
+                    <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">Personal Information</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                            <input 
+                                id="full-name-display"
+                                type="text" 
+                                value="Charles Crowther" 
+                                class="w-full bg-gray-700 text-white p-3 rounded-lg"
+                                readonly
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                            <input 
+                                id="email-address"
+                                type="email" 
+                                value="charles.crowther@example.com" 
+                                class="w-full bg-gray-700 text-white p-3 rounded-lg"
+                                readonly
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
+                            <input 
+                                id="phone-number"
+                                type="tel" 
+                                value="+1 (555) 123-4567" 
+                                class="w-full bg-gray-700 text-white p-3 rounded-lg"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">Account Security</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Change Password</label>
+                            <input 
+                                id="new-password"
+                                type="password" 
+                                placeholder="New Password" 
+                                class="w-full bg-gray-700 text-white p-3 rounded-lg mb-2"
+                            >
+                            <input 
+                                id="confirm-password"
+                                type="password" 
+                                placeholder="Confirm New Password" 
+                                class="w-full bg-gray-700 text-white p-3 rounded-lg"
+                            >
+                        </div>
+                        <div>
+                            <label class="flex items-center">
+                                <input 
+                                    id="tfa-enabled"
+                                    type="checkbox" 
+                                    class="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded"
+                                >
+                                <span class="ml-2 text-gray-300">Enable Two-Factor Authentication</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold mb-6 border-b border-gray-700 pb-2">Preferences</h2>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Notification Preferences</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center">
+                                <input 
+                                    id="email-notifications"
+                                    type="checkbox" 
+                                    checked 
+                                    class="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded"
+                                >
+                                <span class="ml-2 text-gray-300">Email Notifications</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input 
+                                    id="sms-alerts"
+                                    type="checkbox" 
+                                    class="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded"
+                                >
+                                <span class="ml-2 text-gray-300">SMS Alerts</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input 
+                                    id="investment-updates"
+                                    type="checkbox" 
+                                    checked 
+                                    class="form-checkbox h-5 w-5 text-purple-600 bg-gray-700 border-gray-600 rounded"
+                                >
+                                <span class="ml-2 text-gray-300">Investment Updates</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Display Preferences</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                            <select id="currency-preference" class="w-full bg-gray-700 text-white p-3 rounded-lg">
+                                <option value="USD">USD - United States Dollar</option>
+                                <option value="EUR">EUR - Euro</option>
+                                <option value="GBP">GBP - British Pound</option>
+                                <option value="JPY">JPY - Japanese Yen</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex justify-between">
+                <div id="status-message" class="text-green-400"></div>
+                <div class="flex space-x-4">
+                    <button id="cancel-btn" class="bg-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
+                        Cancel
+                    </button>
+                    <button id="save-btn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-lg hover:opacity-90 transition">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase modules -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+            authDomain: "invest-6c18d.firebaseapp.com",
+            projectId: "invest-6c18d",
+            storageBucket: "invest-6c18d.firebasestorage.app",
+            messagingSenderId: "401038787144",
+            appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+            measurementId: "G-GL5QZ99F5F"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // User ID - in a real app, this would come from authentication
+        const USER_ID = "USR123456";
+        
+        // Log important info to console for debugging
+        function logInfo(message) {
+            console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
+        }
+        
+        // Function to show status message
+        function showStatus(message, isSuccess = true) {
+            const statusElement = document.getElementById('status-message');
+            statusElement.textContent = message;
+            statusElement.className = isSuccess ? 'text-green-400' : 'text-red-400';
+            
+            // Clear after 3 seconds
+            setTimeout(() => {
+                statusElement.textContent = '';
+            }, 3000);
+        }
+        
+        // Function to update initials
+        function updateInitials(name) {
+            const names = name.split(' ');
+            const initials = names.map(n => n.charAt(0).toUpperCase()).join('');
+            document.getElementById('profile-initials').textContent = initials.slice(0, 2);
+        }
+        
+        // Function to load user profile data from Firestore
+        async function loadUserProfile() {
+            try {
+                logInfo("Loading user profile from Firestore...");
+                
+                const docRef = doc(db, "dashboards", USER_ID);
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    const dashboardData = docSnap.data();
+                    logInfo("User data loaded successfully");
+                    
+                    // Set user data in form
+                    const userName = dashboardData.user.name;
+                    const userEmail = dashboardData.user.email;
+                    
+                    document.getElementById('full-name-input').value = userName;
+                    document.getElementById('full-name-display').value = userName;
+                    document.getElementById('email-address').value = userEmail;
+                    
+                    // Update initials
+                    updateInitials(userName);
+                    
+                    // Load profile specific data if it exists
+                    if (dashboardData.profile) {
+                        if (dashboardData.profile.phoneNumber) {
+                            document.getElementById('phone-number').value = dashboardData.profile.phoneNumber;
+                        }
+                        
+                        if (dashboardData.profile.twoFactorEnabled !== undefined) {
+                            document.getElementById('tfa-enabled').checked = dashboardData.profile.twoFactorEnabled;
+                        }
+                        
+                        if (dashboardData.profile.notifications) {
+                            document.getElementById('email-notifications').checked = 
+                                dashboardData.profile.notifications.email !== undefined ? 
+                                dashboardData.profile.notifications.email : true;
+                                
+                            document.getElementById('sms-alerts').checked = 
+                                dashboardData.profile.notifications.sms !== undefined ? 
+                                dashboardData.profile.notifications.sms : false;
+                                
+                            document.getElementById('investment-updates').checked = 
+                                dashboardData.profile.notifications.investmentUpdates !== undefined ? 
+                                dashboardData.profile.notifications.investmentUpdates : true;
+                        }
+                        
+                        if (dashboardData.profile.currency) {
+                            document.getElementById('currency-preference').value = dashboardData.profile.currency;
+                        }
+                    }
+                } else {
+                    logInfo("No user data found in Firestore");
+                    showStatus("Could not load user profile", false);
+                }
+            } catch (error) {
+                console.error("Error loading user profile:", error);
+                showStatus("Error loading profile data", false);
+            }
+        }
+        
+        // Function to save user profile to Firestore
+        async function saveUserProfile() {
+            try {
+                logInfo("Saving user profile to Firestore...");
+                
+                const newName = document.getElementById('full-name-input').value.trim();
+                const phoneNumber = document.getElementById('phone-number').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const twoFactorEnabled = document.getElementById('tfa-enabled').checked;
+                const emailNotifs = document.getElementById('email-notifications').checked;
+                const smsAlerts = document.getElementById('sms-alerts').checked;
+                const investmentUpdates = document.getElementById('investment-updates').checked;
+                const currency = document.getElementById('currency-preference').value;
+                
+                // Basic validation
+                if (!newName) {
+                    logInfo("Validation error: Name cannot be empty");
+                    showStatus("Name cannot be empty", false);
+                    return false;
+                }
+                
+                if (newPassword && newPassword !== confirmPassword) {
+                    logInfo("Validation error: Passwords do not match");
+                    showStatus("Passwords do not match", false);
+                    return false;
+                }
+                
+                // Get existing data first
+                const docRef = doc(db, "dashboards", USER_ID);
+                const docSnap = await getDoc(docRef);
+                
+                if (!docSnap.exists()) {
+                    logInfo("ERROR: User data not found");
+                    showStatus("User data not found", false);
+                    return false;
+                }
+                
+                // Get existing data
+                const dashboardData = docSnap.data();
+                
+                // Update with new profile data
+                const updatedData = {
+                    user: {
+                        ...dashboardData.user,
+                        name: newName
+                    },
+                    profile: {
+                        phoneNumber,
+                        twoFactorEnabled,
+                        notifications: {
+                            email: emailNotifs,
+                            sms: smsAlerts,
+                            investmentUpdates
+                        },
+                        currency,
+                        lastUpdated: new Date().toISOString()
+                    }
+                };
+                
+                // If password is being changed, include it (in a real app, this would be handled securely)
+                if (newPassword) {
+                    updatedData.profile.passwordChanged = true;
+                    // Note: Never store passwords in plain text. This is just for demo.
+                    // In a real app, password changes would be handled by an authentication service
+                }
+                
+                // Update user document with merged data
+                await updateDoc(docRef, updatedData);
+                
+                logInfo("Profile updated successfully");
+                showStatus("Profile updated successfully", true);
+                
+                // Update the displayed name and initials
+                document.getElementById('full-name-display').value = newName;
+                updateInitials(newName);
+                
+                return true;
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                showStatus("Error saving profile", false);
+                return false;
+            }
+        }
+        
+        // When document is loaded, set up event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            logInfo("Page loaded, initializing profile page");
+            
+            // Load user profile data
+            loadUserProfile();
+            
+            // Save button event listener
+            document.getElementById('save-btn').addEventListener('click', async () => {
+                logInfo("Save button clicked");
+                const success = await saveUserProfile();
+                
+                if (success) {
+                    // Clear password fields
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                }
+            });
+            
+            // Cancel button event listener
+            document.getElementById('cancel-btn').addEventListener('click', () => {
+                logInfo("Cancel button clicked, reloading profile data");
+                loadUserProfile();
+            });
+        });
+    </script>
+</body>
+</html>
