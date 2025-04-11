@@ -5,6 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Withdraw Funds</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #1F2937;
+            border-radius: 0.75rem;
+            max-width: 32rem;
+            width: 90%;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
     <div class="container mx-auto px-4 py-8">
@@ -14,7 +42,7 @@
             <div class="bg-gray-700 p-6 rounded-lg mb-6">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xl font-semibold">Available Balance</span>
-                    <span class="text-2xl font-bold text-green-500">$6,060.00</span>
+                    <span id="available-balance" class="text-2xl font-bold text-green-500">$25,000.00</span>
                 </div>
             </div>
 
@@ -48,16 +76,17 @@
                 <div id="crypto-details">
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-300 mb-2">Cryptocurrency</label>
-                        <select class="w-full bg-gray-600 text-white p-3 rounded-lg">
-                            <option>Bitcoin (BTC)</option>
-                            <option>Ethereum (ETH)</option>
-                            <option>Tether (USDT)</option>
+                        <select id="crypto-type" class="w-full bg-gray-600 text-white p-3 rounded-lg">
+                            <option value="BTC">Bitcoin (BTC)</option>
+                            <option value="ETH">Ethereum (ETH)</option>
+                            <option value="USDT">Tether (USDT)</option>
                         </select>
                     </div>
 
                     <div class="mb-4">
                         <label class="block text-sm font-medium text-gray-300 mb-2">Wallet Address</label>
                         <input 
+                            id="wallet-address"
                             type="text" 
                             class="w-full bg-gray-600 text-white p-3 rounded-lg" 
                             placeholder="Enter your cryptocurrency wallet address"
@@ -65,14 +94,56 @@
                     </div>
                 </div>
 
+                <div id="bank-details" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Bank Name</label>
+                        <input 
+                            id="bank-name"
+                            type="text" 
+                            class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                            placeholder="Enter your bank name"
+                        >
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Account Number</label>
+                        <input 
+                            id="account-number"
+                            type="text" 
+                            class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                            placeholder="Enter your account number"
+                        >
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">Account Name</label>
+                        <input 
+                            id="account-name"
+                            type="text" 
+                            class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                            placeholder="Enter the account holder name"
+                        >
+                    </div>
+                </div>
+
+                <div id="paypal-details" class="hidden">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-300 mb-2">PayPal Email</label>
+                        <input 
+                            id="paypal-email"
+                            type="email" 
+                            class="w-full bg-gray-600 text-white p-3 rounded-lg" 
+                            placeholder="Enter your PayPal email address"
+                        >
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-300 mb-2">Withdrawal Amount</label>
                     <input 
+                        id="withdrawal-amount"
                         type="number" 
                         class="w-full bg-gray-600 text-white p-3 rounded-lg" 
                         placeholder="Enter withdrawal amount"
                         min="50"
-                        max="6060"
                     >
                     <p class="text-sm text-gray-400 mt-2">Minimum withdrawal: $50</p>
                 </div>
@@ -87,43 +158,265 @@
         </div>
     </div>
 
-    <script>
-        // Withdrawal Method Selection
-        document.querySelectorAll('.withdrawal-method').forEach(method => {
-            method.addEventListener('click', () => {
-                // Remove selected class from all methods
-                document.querySelectorAll('.withdrawal-method').forEach(m => m.classList.remove('withdrawal-selected'));
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-xl font-bold mb-2">Withdrawal Request Submitted</h3>
+                <p class="mb-4">Your withdrawal request has been successfully submitted.</p>
+                <p class="text-yellow-400 font-bold mb-6">Please contact the admin for further steps to complete your withdrawal.</p>
+                <div id="withdrawal-details" class="bg-gray-800 p-4 rounded-lg text-left mb-6">
+                    <p><strong>Method:</strong> <span id="modal-method">Cryptocurrency</span></p>
+                    <p><strong>Amount:</strong> <span id="modal-amount">$500</span></p>
+                    <p><strong>Date:</strong> <span id="modal-date">April 11, 2025</span></p>
+                </div>
+                <button id="close-modal" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase modules -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+            authDomain: "invest-6c18d.firebaseapp.com",
+            projectId: "invest-6c18d",
+            storageBucket: "invest-6c18d.firebasestorage.app",
+            messagingSenderId: "401038787144",
+            appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+            measurementId: "G-GL5QZ99F5F"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // User ID - in a real app, this would come from authentication
+        const USER_ID = "USR123456";
+        
+        // Function to format number with commas
+        function formatNumberWithCommas(number) {
+            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+        
+        // Function to load user balance data
+        async function loadUserBalanceData() {
+            try {
+                // Get the document from Firestore
+                const docRef = doc(db, "dashboards", USER_ID);
+                const docSnap = await getDoc(docRef);
                 
-                // Add selected class to clicked method
-                method.classList.add('withdrawal-selected');
+                if (!docSnap.exists()) {
+                    console.log('No data found in Firestore');
+                    return;
+                }
+                
+                // Get the data and update the balance display
+                const dashboardData = docSnap.data();
+                const balance = dashboardData.balances.accountBalance;
+                
+                // Update the maximum withdrawal amount based on available balance
+                document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance.toFixed(2));
+                document.getElementById('withdrawal-amount').max = balance;
+                
+                console.log('Balance loaded successfully:', balance);
+            } catch (error) {
+                console.error('Error loading balance data:', error);
+            }
+        }
+        
+        // Function to record the withdrawal in Firebase
+        async function recordWithdrawal(method, details, amount) {
+            try {
+                // Get the current user data
+                const docRef = doc(db, "dashboards", USER_ID);
+                const docSnap = await getDoc(docRef);
+                
+                if (!docSnap.exists()) {
+                    console.error('User data not found');
+                    return false;
+                }
+                
+                const dashboardData = docSnap.data();
+                const currentBalance = dashboardData.balances.accountBalance;
+                const currentWithdraws = dashboardData.balances.totalWithdraw || 0;
+                
+                // Check if amount is valid
+                if (amount > currentBalance) {
+                    alert('Withdrawal amount exceeds available balance');
+                    return false;
+                }
+                
+                // Create a withdrawal record
+                const withdrawal = {
+                    method,
+                    details,
+                    amount,
+                    date: new Date().toISOString(),
+                    status: 'pending'
+                };
+                
+                // Update user document
+                const withdrawals = dashboardData.withdrawals || [];
+                withdrawals.push(withdrawal);
+                
+                // Update the balances
+                const updatedData = {
+                    balances: {
+                        ...dashboardData.balances,
+                        accountBalance: currentBalance - amount,
+                        totalWithdraw: currentWithdraws + amount
+                    },
+                    withdrawals
+                };
+                
+                await updateDoc(docRef, updatedData);
+                console.log('Withdrawal recorded successfully');
+                return true;
+            } catch (error) {
+                console.error('Error recording withdrawal:', error);
+                return false;
+            }
+        }
+        
+        // Modal functionality
+        function showModal() {
+            document.getElementById('success-modal').classList.add('show');
+        }
+        
+        function hideModal() {
+            document.getElementById('success-modal').classList.remove('show');
+        }
+        
+        // When document is loaded, set up event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Withdraw page initializing...');
+            
+            // Load the user's balance
+            loadUserBalanceData();
+            
+            // Withdrawal Method Selection
+            document.querySelectorAll('.withdrawal-method').forEach(method => {
+                method.addEventListener('click', () => {
+                    // Get the method type
+                    const methodType = method.dataset.method;
+                    
+                    // Remove selected class from all methods
+                    document.querySelectorAll('.withdrawal-method').forEach(m => {
+                        m.classList.remove('withdrawal-selected');
+                    });
+                    
+                    // Add selected class to clicked method
+                    method.classList.add('withdrawal-selected');
+                    
+                    // Show the appropriate form fields
+                    document.getElementById('crypto-details').classList.add('hidden');
+                    document.getElementById('bank-details').classList.add('hidden');
+                    document.getElementById('paypal-details').classList.add('hidden');
+                    
+                    if (methodType === 'crypto') {
+                        document.getElementById('crypto-details').classList.remove('hidden');
+                    } else if (methodType === 'bank') {
+                        document.getElementById('bank-details').classList.remove('hidden');
+                    } else if (methodType === 'paypal') {
+                        document.getElementById('paypal-details').classList.remove('hidden');
+                    }
+                });
             });
-        });
 
-        // Submit Withdrawal Request
-        document.getElementById('submit-withdrawal').addEventListener('click', () => {
-            const selectedMethod = document.querySelector('.withdrawal-selected').dataset.method;
-            const amount = document.querySelector('input[type="number"]').value;
+            // Close modal button
+            document.getElementById('close-modal').addEventListener('click', () => {
+                hideModal();
+            });
 
-            // Basic validation
-            if (!selectedMethod) {
-                alert('Please select a withdrawal method');
-                return;
-            }
-
-            if (!amount || parseFloat(amount) < 50) {
-                alert('Minimum withdrawal is $50');
-                return;
-            }
-
-            if (parseFloat(amount) > 6060) {
-                alert('Withdrawal amount exceeds available balance');
-                return;
-            }
-
-            // In a real application, this would send data to backend
-            alert(`Withdrawal Request Submitted
-Method: ${selectedMethod}
-Amount: $${amount}`);
+            // Submit Withdrawal Request
+            document.getElementById('submit-withdrawal').addEventListener('click', async () => {
+                const selectedMethodElement = document.querySelector('.withdrawal-selected');
+                if (!selectedMethodElement) {
+                    alert('Please select a withdrawal method');
+                    return;
+                }
+                
+                const selectedMethod = selectedMethodElement.dataset.method;
+                const amount = parseFloat(document.getElementById('withdrawal-amount').value);
+                
+                // Validate amount
+                if (!amount || isNaN(amount)) {
+                    alert('Please enter a valid withdrawal amount');
+                    return;
+                }
+                
+                if (amount < 50) {
+                    alert('Minimum withdrawal is $50');
+                    return;
+                }
+                
+                // Get method-specific details
+                let details = {};
+                
+                if (selectedMethod === 'crypto') {
+                    const cryptoType = document.getElementById('crypto-type').value;
+                    const walletAddress = document.getElementById('wallet-address').value;
+                    
+                    if (!walletAddress) {
+                        alert('Please enter your wallet address');
+                        return;
+                    }
+                    
+                    details = { cryptoType, walletAddress };
+                } else if (selectedMethod === 'bank') {
+                    const bankName = document.getElementById('bank-name').value;
+                    const accountNumber = document.getElementById('account-number').value;
+                    const accountName = document.getElementById('account-name').value;
+                    
+                    if (!bankName || !accountNumber || !accountName) {
+                        alert('Please fill in all bank details');
+                        return;
+                    }
+                    
+                    details = { bankName, accountNumber, accountName };
+                } else if (selectedMethod === 'paypal') {
+                    const paypalEmail = document.getElementById('paypal-email').value;
+                    
+                    if (!paypalEmail) {
+                        alert('Please enter your PayPal email');
+                        return;
+                    }
+                    
+                    details = { paypalEmail };
+                }
+                
+                // Record the withdrawal in Firebase
+                const success = await recordWithdrawal(selectedMethod, details, amount);
+                
+                if (success) {
+                    // Update the modal content
+                    document.getElementById('modal-method').textContent = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
+                    document.getElementById('modal-amount').textContent = '$' + formatNumberWithCommas(amount.toFixed(2));
+                    document.getElementById('modal-date').textContent = new Date().toLocaleDateString();
+                    
+                    // Show success modal
+                    showModal();
+                    
+                    // Update the balance display
+                    loadUserBalanceData();
+                    
+                    // Reset form
+                    document.getElementById('withdrawal-amount').value = '';
+                } else {
+                    alert('Failed to process withdrawal request. Please try again later.');
+                }
+            });
         });
     </script>
 </body>
