@@ -38,6 +38,11 @@
                 </button>
             </div>
 
+            <!-- Debug Info Container -->
+            <div id="debug-info" class="bg-gray-700 p-4 rounded-lg mb-4 text-yellow-300">
+                Debug information will appear here...
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="w-full text-left">
                     <thead>
@@ -50,67 +55,25 @@
                         </tr>
                     </thead>
                     <tbody id="transaction-list">
-                        <tr class="border-b border-gray-700">
-                            <td class="p-4">2025-03-15</td>
-                            <td class="p-4">
-                                <span class="bg-green-500 text-white px-2 py-1 rounded">Deposit</span>
-                            </td>
-                            <td class="p-4 text-green-400">+$2,500.00</td>
-                            <td class="p-4">
-                                <span class="bg-blue-500 text-white px-2 py-1 rounded">Completed</span>
-                            </td>
-                            <td class="p-4">
-                                <button class="text-purple-400 hover:text-purple-300 transition">
-                                    View Details
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-700">
-                            <td class="p-4">2025-03-10</td>
-                            <td class="p-4">
-                                <span class="bg-red-500 text-white px-2 py-1 rounded">Withdrawal</span>
-                            </td>
-                            <td class="p-4 text-red-400">-$1,000.00</td>
-                            <td class="p-4">
-                                <span class="bg-green-500 text-white px-2 py-1 rounded">Completed</span>
-                            </td>
-                            <td class="p-4">
-                                <button class="text-purple-400 hover:text-purple-300 transition">
-                                    View Details
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="border-b border-gray-700">
-                            <td class="p-4">2025-03-05</td>
-                            <td class="p-4">
-                                <span class="bg-purple-500 text-white px-2 py-1 rounded">Investment</span>
-                            </td>
-                            <td class="p-4 text-purple-400">-$2,500.00</td>
-                            <td class="p-4">
-                                <span class="bg-yellow-500 text-white px-2 py-1 rounded">Ongoing</span>
-                            </td>
-                            <td class="p-4">
-                                <button class="text-purple-400 hover:text-purple-300 transition">
-                                    View Details
-                                </button>
-                            </td>
-                        </tr>
+                        <!-- Transactions will be dynamically populated here -->
                     </tbody>
                 </table>
             </div>
 
             <div class="mt-6 flex justify-between items-center">
-                <div class="text-gray-400">
-                    Showing 1-3 of 3 transactions
+                <div class="text-gray-400" id="transaction-count">
+                    Showing 0 of 0 transactions
                 </div>
                 <div class="space-x-2">
                     <button 
+                        id="previous-page"
                         class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
                         disabled
                     >
                         Previous
                     </button>
                     <button 
+                        id="next-page"
                         class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition"
                         disabled
                     >
@@ -121,39 +84,158 @@
         </div>
     </div>
 
-    <script>
-        // Filter Transactions
-        document.getElementById('filter-transactions').addEventListener('click', () => {
-            const transactionType = document.getElementById('transaction-type').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
-
-            console.log('Filtering transactions:', {
-                type: transactionType,
-                startDate: startDate,
-                endDate: endDate
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, query, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+            authDomain: "invest-6c18d.firebaseapp.com",
+            projectId: "invest-6c18d",
+            storageBucket: "invest-6c18d.firebasestorage.app",
+            messagingSenderId: "401038787144",
+            appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+            measurementId: "G-GL5QZ99F5F"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // User ID - in a real app, this would come from authentication
+        const USER_ID = "USR123456";
+        
+        // Debug function to log information
+        function debugLog(message) {
+            console.log(message);
+            const debugInfoEl = document.getElementById('debug-info');
+            debugInfoEl.textContent = message;
+        }
+        
+        // Function to fetch transactions
+        async function fetchTransactions() {
+            try {
+                debugLog('Starting transaction fetch...');
+                
+                // Attempt to query transactions directly from the transactions collection
+                const transactionsRef = collection(db, 'transactions');
+                
+                // Log collections to verify structure
+                const collectionsQuery = query(transactionsRef);
+                const collectionsSnapshot = await getDocs(collectionsQuery);
+                
+                debugLog(`Total transactions found: ${collectionsSnapshot.size}`);
+                
+                // If no transactions found in the main collection, try a different approach
+                if (collectionsSnapshot.empty) {
+                    // Try querying with a filter to see if any exist
+                    const filteredQuery = query(transactionsRef, where('userId', '==', USER_ID));
+                    const filteredSnapshot = await getDocs(filteredQuery);
+                    
+                    debugLog(`Filtered transactions found: ${filteredSnapshot.size}`);
+                    
+                    // Render transactions
+                    const transactions = [];
+                    filteredSnapshot.forEach((doc) => {
+                        transactions.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    renderTransactions(transactions);
+                } else {
+                    // Render transactions from the main collection
+                    const transactions = [];
+                    collectionsSnapshot.forEach((doc) => {
+                        transactions.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    renderTransactions(transactions);
+                }
+            } catch (error) {
+                debugLog(`Error fetching transactions: ${error.message}`);
+                console.error("Error fetching transactions:", error);
+            }
+        }
+        
+        // Function to render transactions
+        function renderTransactions(transactionList) {
+            debugLog(`Rendering ${transactionList.length} transactions`);
+            
+            const transactionListEl = document.getElementById('transaction-list');
+            transactionListEl.innerHTML = ''; // Clear previous transactions
+            
+            if (transactionList.length === 0) {
+                transactionListEl.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center p-4 text-gray-500">
+                            No transactions found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            transactionList.forEach(transaction => {
+                const row = document.createElement('tr');
+                row.classList.add('border-b', 'border-gray-700');
+                
+                // Extract transaction details, with fallback values
+                const date = transaction.date ? 
+                    (transaction.date.toDate ? transaction.date.toDate() : new Date(transaction.date)).toISOString().split('T')[0] 
+                    : 'N/A';
+                const type = transaction.type || 'Unknown';
+                const amount = transaction.amount || 0;
+                const status = transaction.status || 'Pending';
+                
+                // Determine colors based on transaction type
+                const typeColor = getTransactionTypeColor(type);
+                const amountColor = type === 'deposit' ? 'green' : 'red';
+                const amountSign = type === 'deposit' ? '+' : '-';
+                
+                row.innerHTML = `
+                    <td class="p-4">${date}</td>
+                    <td class="p-4">
+                        <span class="bg-${typeColor}-500 text-white px-2 py-1 rounded">${type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                    </td>
+                    <td class="p-4 text-${amountColor}-400">${amountSign}$${amount.toLocaleString()}</td>
+                    <td class="p-4">
+                        <span class="bg-blue-500 text-white px-2 py-1 rounded">${status}</span>
+                    </td>
+                    <td class="p-4">
+                        <button class="text-purple-400 hover:text-purple-300 transition view-details">
+                            View Details
+                        </button>
+                    </td>
+                `;
+                
+                transactionListEl.appendChild(row);
             });
-
-            // In a real application, this would filter transactions based on selected criteria
-            alert('Transactions filtered');
-        });
-
-        // View Transaction Details
-        document.querySelectorAll('button.text-purple-400').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const row = event.target.closest('tr');
-                const date = row.querySelector('td:first-child').textContent;
-                const type = row.querySelector('td:nth-child(2) span').textContent;
-                const amount = row.querySelector('td:nth-child(3)').textContent;
-                const status = row.querySelector('td:nth-child(4) span').textContent;
-
-                // In a real application, this would open a modal or navigate to a details page
-                alert(`Transaction Details:
-Date: ${date}
-Type: ${type}
-Amount: ${amount}
-Status: ${status}`);
-            });
+            
+            // Update transaction count
+            document.getElementById('transaction-count').textContent = 
+                `Showing ${transactionList.length} transactions`;
+        }
+        
+        // Function to get transaction type color
+        function getTransactionTypeColor(type) {
+            switch(type.toLowerCase()) {
+                case 'deposit': return 'green';
+                case 'withdrawal': return 'red';
+                case 'investment': return 'purple';
+                default: return 'blue';
+            }
+        }
+        
+        // Initialize transactions on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchTransactions();
         });
     </script>
 </body>
