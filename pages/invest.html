@@ -6,108 +6,14 @@
   <title>Invest - Investment Platform</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="../styles/dashboard.css"/>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-    import emailjs from "https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/+esm";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
-      authDomain: "invest-6c18d.firebaseapp.com",
-      projectId: "invest-6c18d",
-      storageBucket: "invest-6c18d.appspot.com",
-      messagingSenderId: "401038787144",
-      appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
-      measurementId: "G-GL5QZ99F5F"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const userId = "USER_ID"; // Replace this with dynamic user ID
-
-    const calculateButton = document.getElementById("calculate-returns");
-    const investmentInput = document.getElementById("investment-amount");
-    const planSelect = document.getElementById("investment-plan");
-    const weeklyROI = document.getElementById("weekly-roi");
-    const monthlyROI = document.getElementById("monthly-roi");
-    const yearlyROI = document.getElementById("yearly-roi");
-
-    function calculateReturns() {
-      const amount = parseFloat(investmentInput.value);
-      const rate = 0.2;
-      if (!amount || amount < 1000 || amount > 7500) {
-        alert("Please enter an amount between $1,000 and $7,500.");
-        return;
-      }
-      const weekly = amount * rate;
-      const monthly = weekly * 4;
-      const yearly = weekly * 52;
-
-      weeklyROI.textContent = `$${weekly.toFixed(2)}`;
-      monthlyROI.textContent = `$${monthly.toFixed(2)}`;
-      yearlyROI.textContent = `$${yearly.toFixed(2)}`;
-    }
-
-    calculateButton.addEventListener("click", calculateReturns);
-
-    async function handleInvestment(plan) {
-      const plans = {
-        gold: { min: 1000, max: 2500 },
-        diamond: { min: 2500, max: 4000 },
-        vip: { min: 4000, max: 7500 }
-      };
-      const amount = parseFloat(investmentInput.value);
-      const selected = plans[plan];
-
-      if (!amount || amount < selected.min || amount > selected.max) {
-        alert(`Amount must be between $${selected.min} and $${selected.max} for the ${plan.toUpperCase()} plan.`);
-        return;
-      }
-
-      const userRef = doc(db, "users", userId);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        alert("User not found.");
-        return;
-      }
-
-      const user = userSnap.data();
-      const balance = user.balance || 0;
-
-      if (balance < amount) {
-        alert("Insufficient balance to invest in this plan.");
-        return;
-      }
-
-      const newBalance = balance - amount;
-
-      await updateDoc(userRef, {
-        balance: newBalance,
-        plan: plan,
-        investment: amount
-      });
-
-      // Optional EmailJS integration
-      emailjs.send("service_id", "template_id", {
-        user_email: user.email,
-        plan_name: plan,
-        amount: amount
-      }, "public_key");
-
-      alert(`Successfully invested $${amount} in the ${plan.toUpperCase()} plan! New balance: $${newBalance.toFixed(2)}`);
-    }
-
-    document.querySelectorAll(".invest-btn").forEach((btn) => {
-      const plan = btn.getAttribute("data-plan");
-      btn.addEventListener("click", () => handleInvestment(plan));
-    });
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body class="bg-gray-900 text-white">
   <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-2xl font-bold">Save and Rewards Plans</h1>
+      <h1 class="text-2xl font-bold">Investment Plans</h1>
       <div class="flex items-center space-x-4">
         <span class="text-lg">Current Balance: <span id="balance-display">$0.00</span></span>
       </div>
@@ -115,6 +21,7 @@
 
     <!-- Investment Plans -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
       <!-- Gold Plan -->
       <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
         <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
@@ -140,7 +47,7 @@
             class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
             data-plan="gold"
           >
-            Save in Gold Plan
+            Invest in Gold Plan
           </button>
         </div>
       </div>
@@ -164,7 +71,7 @@
             class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
             data-plan="diamond"
           >
-            Save in Diamond Plan
+            Invest in Diamond Plan
           </button>
         </div>
       </div>
@@ -188,7 +95,7 @@
             class="w-full bg-gradient-to-r from-red-500 to-yellow-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
             data-plan="vip"
           >
-            Save in VIP Plan
+            Invest in VIP Plan
           </button>
         </div>
       </div>
@@ -256,6 +163,86 @@
       </div>
     </div>
   </div>
-  <script src="../scripts/investment.js"></script>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+      authDomain: "invest-6c18d.firebaseapp.com",
+      projectId: "invest-6c18d",
+      storageBucket: "invest-6c18d.appspot.com",
+      messagingSenderId: "401038787144",
+      appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+      measurementId: "G-GL5QZ99F5F"
+    };
+
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth(); // Initialize Firebase Authentication
+
+    let accountBalance = 0;
+
+    // Get current account balance from Firestore based on logged-in user
+    function getAccountBalance() {
+      const user = auth.currentUser;
+
+      if (user) {
+        const userId = user.uid; // Get the logged-in user's UID
+        const userRef = db.collection('users').doc(userId); // Use UID to get the user's document
+        userRef.get().then((doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            accountBalance = data.accountBalance;
+            document.getElementById('balance-display').innerText = `$${accountBalance.toFixed(2)}`;
+          } else {
+            console.log("No such document!");
+          }
+        }).catch((error) => {
+          console.log("Error getting document:", error);
+        });
+      } else {
+        console.log("No user is logged in.");
+      }
+    }
+
+    // Event listener for investment buttons
+    document.querySelectorAll('.invest-btn').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const plan = e.target.dataset.plan;
+        const investmentAmount = document.getElementById('investment-amount').value;
+        const user = auth.currentUser;
+
+        if (user) {
+          if (investmentAmount <= accountBalance) {
+            alert(`Successfully invested in ${plan} plan.`);
+            // Update Firestore with the new balance and other fields
+            accountBalance -= investmentAmount;
+            db.collection('users').doc(user.uid).update({
+              accountBalance: accountBalance,
+              investmentTotal: firebase.firestore.FieldValue.increment(investmentAmount),
+              totalDeposit: firebase.firestore.FieldValue.increment(investmentAmount),
+              totalDisplay: firebase.firestore.FieldValue.increment(investmentAmount),
+              lastUpdated: new Date().toISOString()
+            });
+            getAccountBalance();  // Refresh balance display
+          } else {
+            alert('Insufficient balance.');
+          }
+        } else {
+          alert('User is not logged in!');
+        }
+      });
+    });
+
+    // Call this function when the page loads to display the balance
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        getAccountBalance();  // Get the account balance for the logged-in user
+      } else {
+        console.log("No user is logged in.");
+      }
+    });
+  </script>
 </body>
 </html>
