@@ -90,11 +90,14 @@
       }
 
       const newBalance = balance - amount;
+      const currentInvestmentTotal = userData.investmentTotal || 0;
+      const updatedInvestmentTotal = currentInvestmentTotal + amount;
 
       await updateDoc(userRef, {
         accountBalance: newBalance,
         plan: plan,
-        investment: amount
+        investment: amount,
+        investmentTotal: updatedInvestmentTotal
       });
 
       emailjs.send("service_538bgur", "template_zzwo3cj", {
@@ -106,9 +109,11 @@
       alert(`Successfully invested $${amount} in the ${plan.toUpperCase()} plan! New balance: $${newBalance.toFixed(2)}`);
     }
 
-    document.querySelectorAll(".invest-btn").forEach((btn) => {
-      const plan = btn.getAttribute("data-plan");
-      btn.addEventListener("click", () => handleInvestment(plan));
+    window.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".invest-btn").forEach((btn) => {
+        const plan = btn.getAttribute("data-plan");
+        btn.addEventListener("click", () => handleInvestment(plan));
+      });
     });
   </script>
 </head>
@@ -146,15 +151,9 @@
             <span class="text-gray-400 ml-2">Weekly ROI</span>
           </div>
           <ul class="space-y-3 mb-6 text-gray-300">
-            <li class="flex items-center">
-              ✅ Minimum Investment: $1,000
-            </li>
-            <li class="flex items-center">
-              ✅ Maximum Investment: $2,500
-            </li>
-            <li class="flex items-center">
-              ✅ Weekly Payout
-            </li>
+            <li class="flex items-center">✅ Minimum Investment: $1,000</li>
+            <li class="flex items-center">✅ Maximum Investment: $2,500</li>
+            <li class="flex items-center">✅ Weekly Payout</li>
           </ul>
           <button 
             class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
@@ -172,7 +171,7 @@
         </div>
         <div class="p-6">
           <div class="mb-4">
-            <span class="text-4xl font-bold text-blue-400">20.00%</span>
+            <span class="text-4xl font-bold text-blue-400">30.00%</span>
             <span class="text-gray-400 ml-2">Weekly ROI</span>
           </div>
           <ul class="space-y-3 mb-6 text-gray-300">
@@ -196,7 +195,7 @@
         </div>
         <div class="p-6">
           <div class="mb-4">
-            <span class="text-4xl font-bold text-red-400">20.00%</span>
+            <span class="text-4xl font-bold text-red-400">40.00%</span>
             <span class="text-gray-400 ml-2">Weekly ROI</span>
           </div>
           <ul class="space-y-3 mb-6 text-gray-300">
