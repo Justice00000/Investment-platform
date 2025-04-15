@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Invest - Investment Platform</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="../styles/dashboard.css"/>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
     import emailjs from "https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/+esm";
 
     const firebaseConfig = {
@@ -23,50 +23,57 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const userId = "XN3x4auZLEfyRT5xrRPqI9Cd1Tf2"; // Replace this with dynamic user ID
+    const auth = getAuth(app);
 
-    const calculateButton = document.getElementById("calculate-returns");
-    const investmentInput = document.getElementById("investment-amount");
-    const planSelect = document.getElementById("investment-plan");
-    const weeklyROI = document.getElementById("weekly-roi");
-    const monthlyROI = document.getElementById("monthly-roi");
-    const yearlyROI = document.getElementById("yearly-roi");
-
-    // Function to calculate returns based on investment amount
-    function calculateReturns() {
-      const amount = parseFloat(investmentInput.value);
-      const rate = 0.2;
-      if (!amount || amount < 1000 || amount > 7500) {
-        alert("Please enter an amount between $1,000 and $7,500.");
-        return;
-      }
-      const weekly = amount * rate;
-      const monthly = weekly * 4;
-      const yearly = weekly * 52;
-
-      weeklyROI.textContent = `$${weekly.toFixed(2)}`;
-      monthlyROI.textContent = `$${monthly.toFixed(2)}`;
-      yearlyROI.textContent = `$${yearly.toFixed(2)}`;
+    function formatNumberWithCommas(number) {
+      return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    calculateButton.addEventListener("click", calculateReturns);
+    function updateDashboardFromFirestore(userId) {
+      const docRef = doc(db, "dashboards", userId);
+      getDoc(docRef).then(docSnap => {
+        if (!docSnap.exists()) return;
 
-    // Handle investment logic for different plans
+        const dashboardData = docSnap.data();
+        const balance = dashboardData.accountBalance ?? 0;
+        document.getElementById('account-balance-display').textContent =
+          formatNumberWithCommas(balance.toFixed(2)) + " USD";
+      }).catch(error => {
+        console.error("Error fetching dashboard data:", error);
+      });
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        updateDashboardFromFirestore(user.uid);
+        onSnapshot(doc(db, "dashboards", user.uid), () => {
+          updateDashboardFromFirestore(user.uid);
+        });
+      } else {
+        console.log("User not logged in");
+      }
+    });
+
     async function handleInvestment(plan) {
       const plans = {
         gold: { min: 1000, max: 2500 },
         diamond: { min: 2500, max: 4000 },
         vip: { min: 4000, max: 7500 }
       };
-      const amount = parseFloat(investmentInput.value);
-      const selected = plans[plan];
 
-      if (!amount || amount < selected.min || amount > selected.max) {
-        alert(`Amount must be between $${selected.min} and $${selected.max} for the ${plan.toUpperCase()} plan.`);
+      const amount = parseFloat(document.getElementById("investment-amount").value);
+      if (!amount || amount < plans[plan].min || amount > plans[plan].max) {
+        alert(`Amount must be between $${plans[plan].min} and $${plans[plan].max} for the ${plan.toUpperCase()} plan.`);
         return;
       }
 
-      const userRef = doc(db, "users", userId);
+      const user = auth.currentUser;
+      if (!user) {
+        alert("You need to be logged in to invest.");
+        return;
+      }
+
+      const userRef = doc(db, "dashboards", user.uid);
       const userSnap = await getDoc(userRef);
 
       if (!userSnap.exists()) {
@@ -74,35 +81,28 @@
         return;
       }
 
-      const user = userSnap.data();
-      console.log("User data:", user); // Log the user data for debugging
-      const accountBalance = user.accountBalance || 0; // Get accountBalance from Firestore
-      console.log("Account Balance:", accountBalance); // Log the balance for debugging
+      const userData = userSnap.data();
+      const balance = userData.accountBalance || 0;
 
-      // Check if the user has sufficient balance
-      if (accountBalance < amount) {
+      if (balance < amount) {
         alert("Insufficient balance to invest in this plan.");
         return;
       }
 
-      // Deduct the investment amount from the balance
-      const newBalance = accountBalance - amount;
+      const newBalance = balance - amount;
 
-      // Update the user's balance and investment details in Firestore
       await updateDoc(userRef, {
-        accountBalance: newBalance, // Update the accountBalance field
-        plan: plan, // Store the selected plan
-        investment: amount // Store the investment amount
+        accountBalance: newBalance,
+        plan: plan,
+        investment: amount
       });
 
-      // Optional EmailJS integration (you can remove this if not needed)
       emailjs.send("service_id", "template_id", {
-        user_email: user.email,
+        user_email: userData.email,
         plan_name: plan,
         amount: amount
       }, "public_key");
 
-      // Notify the user about the successful investment
       alert(`Successfully invested $${amount} in the ${plan.toUpperCase()} plan! New balance: $${newBalance.toFixed(2)}`);
     }
 
@@ -117,8 +117,20 @@
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-2xl font-bold">Save and Rewards Plans</h1>
       <div class="flex items-center space-x-4">
-        <span class="text-lg">Current Balance: <span id="balance-display">$0.00</span></span>
+        <span class="text-lg">Current Balance: <span id="account-balance-display">$0.00</span></span>
       </div>
+    </div>
+
+    <!-- Investment Amount Input -->
+    <div class="mb-4">
+      <label for="investment-amount" class="block text-sm font-medium text-white">Investment Amount (USD)</label>
+      <input 
+        type="number" 
+        id="investment-amount" 
+        class="mt-2 p-2 w-full rounded-md border-2 border-gray-700 bg-gray-800 text-white"
+        placeholder="Enter amount"
+        required
+      />
     </div>
 
     <!-- Investment Plans -->
@@ -203,50 +215,6 @@
 
     </div>
 
-    <!-- Investment Calculator -->
-    <div class="mt-12 bg-gray-800 rounded-xl p-6">
-      <h2 class="text-2xl font-bold mb-6 text-center">Investment Calculator</h2>
-      <div class="grid md:grid-cols-2 gap-6">
-        <div>
-          <label for="investment-amount" class="block text-sm font-medium text-gray-300 mb-2">
-            Investment Amount ($)
-          </label>
-          <input 
-            type="number" 
-            id="investment-amount" 
-            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
-            placeholder="Enter investment amount"
-            min="1000"
-            max="7500"
-          >
-        </div>
-        <div>
-          <label for="investment-plan" class="block text-sm font-medium text-gray-300 mb-2">
-            Select Investment Plan
-          </label>
-          <select 
-            id="investment-plan" 
-            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
-          >
-            <option value="gold">Gold Plan (1,000 - 2,500)</option>
-            <option value="diamond">Diamond Plan (2,500 - 4,000)</option>
-            <option value="vip">VIP Plan (4,000 - 7,500)</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="mt-6 text-center">
-        <button id="calculate-returns" class="w-full bg-purple-500 text-white py-3 rounded-lg hover:bg-purple-600 transition">
-          Calculate Returns
-        </button>
-      </div>
-
-      <div class="mt-6 text-center">
-        <h3 class="text-lg">Weekly ROI: <span id="weekly-roi">$0.00</span></h3>
-        <h3 class="text-lg">Monthly ROI: <span id="monthly-roi">$0.00</span></h3>
-        <h3 class="text-lg">Yearly ROI: <span id="yearly-roi">$0.00</span></h3>
-      </div>
-    </div>
   </div>
 </body>
 </html>
