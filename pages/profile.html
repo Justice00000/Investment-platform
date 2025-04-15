@@ -31,7 +31,7 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
                             <input 
-                                id="full-name-display"
+                                id="fullName"
                                 type="text" 
                                 value="Charles Crowther" 
                                 class="w-full bg-gray-700 text-white p-3 rounded-lg"
@@ -46,15 +46,6 @@
                                 value="charles.crowther@example.com" 
                                 class="w-full bg-gray-700 text-white p-3 rounded-lg"
                                 readonly
-                            >
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Phone Number</label>
-                            <input 
-                                id="phone-number"
-                                type="tel" 
-                                value="+1 (555) 123-4567" 
-                                class="w-full bg-gray-700 text-white p-3 rounded-lg"
                             >
                         </div>
                     </div>
@@ -157,11 +148,10 @@
 
     <!-- Firebase modules -->
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-        
-        // Your Firebase configuration
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+    
         const firebaseConfig = {
             apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
             authDomain: "invest-6c18d.firebaseapp.com",
@@ -171,209 +161,103 @@
             appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
             measurementId: "G-GL5QZ99F5F"
         };
-        
-        // Initialize Firebase
+    
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        // User ID - in a real app, this would come from authentication
-        const USER_ID = "USR123456";
-        
-        // Log important info to console for debugging
+        const auth = getAuth(app);
+    
         function logInfo(message) {
             console.log(`[${new Date().toLocaleTimeString()}] ${message}`);
         }
-        
-        // Function to show status message
+    
         function showStatus(message, isSuccess = true) {
             const statusElement = document.getElementById('status-message');
             statusElement.textContent = message;
             statusElement.className = isSuccess ? 'text-green-400' : 'text-red-400';
-            
-            // Clear after 3 seconds
+    
             setTimeout(() => {
                 statusElement.textContent = '';
             }, 3000);
         }
-        
-        // Function to update initials
+    
         function updateInitials(name) {
             const names = name.split(' ');
             const initials = names.map(n => n.charAt(0).toUpperCase()).join('');
             document.getElementById('profile-initials').textContent = initials.slice(0, 2);
         }
-        
-        // Function to load user profile data from Firestore
-        async function loadUserProfile() {
+    
+        let currentUserId = null;
+    
+        async function loadUserProfile(uid) {
             try {
                 logInfo("Loading user profile from Firestore...");
-                
-                const docRef = doc(db, "dashboards", USER_ID);
+    
+                const docRef = doc(db, "users", uid);
                 const docSnap = await getDoc(docRef);
-                
+    
                 if (docSnap.exists()) {
-                    const dashboardData = docSnap.data();
+                    const userData = docSnap.data();
                     logInfo("User data loaded successfully");
-                    
-                    // Set user data in form
-                    const userName = dashboardData.user.name;
-                    const userEmail = dashboardData.user.email;
-                    
-                    document.getElementById('full-name-input').value = userName;
-                    document.getElementById('full-name-display').value = userName;
+    
+                    const userFullName = userData.fullName;
+                    const userEmail = userData.email;
+    
+                    document.getElementById('full-name-input').value = userFullName;
+                    document.getElementById('fullName').value = userFullName;
                     document.getElementById('email-address').value = userEmail;
-                    
-                    // Update initials
-                    updateInitials(userName);
-                    
-                    // Load profile specific data if it exists
-                    if (dashboardData.profile) {
-                        if (dashboardData.profile.phoneNumber) {
-                            document.getElementById('phone-number').value = dashboardData.profile.phoneNumber;
-                        }
-                        
-                        if (dashboardData.profile.twoFactorEnabled !== undefined) {
-                            document.getElementById('tfa-enabled').checked = dashboardData.profile.twoFactorEnabled;
-                        }
-                        
-                        if (dashboardData.profile.notifications) {
-                            document.getElementById('email-notifications').checked = 
-                                dashboardData.profile.notifications.email !== undefined ? 
-                                dashboardData.profile.notifications.email : true;
-                                
-                            document.getElementById('sms-alerts').checked = 
-                                dashboardData.profile.notifications.sms !== undefined ? 
-                                dashboardData.profile.notifications.sms : false;
-                                
-                            document.getElementById('investment-updates').checked = 
-                                dashboardData.profile.notifications.investmentUpdates !== undefined ? 
-                                dashboardData.profile.notifications.investmentUpdates : true;
-                        }
-                        
-                        if (dashboardData.profile.currency) {
-                            document.getElementById('currency-preference').value = dashboardData.profile.currency;
-                        }
-                    }
+                    updateInitials(userFullName);
                 } else {
-                    logInfo("No user data found in Firestore");
-                    showStatus("Could not load user profile", false);
+                    console.error("No such document!");
                 }
             } catch (error) {
                 console.error("Error loading user profile:", error);
-                showStatus("Error loading profile data", false);
+                showStatus("Error loading profile", false);
             }
         }
-        
-        // Function to save user profile to Firestore
+    
         async function saveUserProfile() {
             try {
                 logInfo("Saving user profile to Firestore...");
-                
-                const newName = document.getElementById('full-name-input').value.trim();
-                const phoneNumber = document.getElementById('phone-number').value;
-                const newPassword = document.getElementById('new-password').value;
-                const confirmPassword = document.getElementById('confirm-password').value;
-                const twoFactorEnabled = document.getElementById('tfa-enabled').checked;
-                const emailNotifs = document.getElementById('email-notifications').checked;
-                const smsAlerts = document.getElementById('sms-alerts').checked;
-                const investmentUpdates = document.getElementById('investment-updates').checked;
-                const currency = document.getElementById('currency-preference').value;
-                
-                // Basic validation
-                if (!newName) {
-                    logInfo("Validation error: Name cannot be empty");
-                    showStatus("Name cannot be empty", false);
-                    return false;
-                }
-                
-                if (newPassword && newPassword !== confirmPassword) {
-                    logInfo("Validation error: Passwords do not match");
-                    showStatus("Passwords do not match", false);
-                    return false;
-                }
-                
-                // Get existing data first
-                const docRef = doc(db, "dashboards", USER_ID);
-                const docSnap = await getDoc(docRef);
-                
-                if (!docSnap.exists()) {
-                    logInfo("ERROR: User data not found");
-                    showStatus("User data not found", false);
-                    return false;
-                }
-                
-                // Get existing data
-                const dashboardData = docSnap.data();
-                
-                // Update with new profile data
-                const updatedData = {
-                    user: {
-                        ...dashboardData.user,
-                        name: newName
-                    },
-                    profile: {
-                        phoneNumber,
-                        twoFactorEnabled,
-                        notifications: {
-                            email: emailNotifs,
-                            sms: smsAlerts,
-                            investmentUpdates
-                        },
-                        currency,
-                        lastUpdated: new Date().toISOString()
-                    }
-                };
-                
-                // If password is being changed, include it (in a real app, this would be handled securely)
-                if (newPassword) {
-                    updatedData.profile.passwordChanged = true;
-                    // Note: Never store passwords in plain text. This is just for demo.
-                    // In a real app, password changes would be handled by an authentication service
-                }
-                
-                // Update user document with merged data
-                await updateDoc(docRef, updatedData);
-                
-                logInfo("Profile updated successfully");
-                showStatus("Profile updated successfully", true);
-                
-                // Update the displayed name and initials
-                document.getElementById('full-name-display').value = newName;
-                updateInitials(newName);
-                
-                return true;
+    
+                const userFullName = document.getElementById('full-name-input').value;
+                const userEmail = document.getElementById('email-address').value;
+    
+                const docRef = doc(db, "users", currentUserId);
+                await updateDoc(docRef, {
+                    fullName: userFullName,
+                    email: userEmail
+                });
+    
+                logInfo("User data saved successfully");
+                showStatus("Profile saved successfully", true);
             } catch (error) {
-                console.error("Error saving profile:", error);
+                console.error("Error saving user profile:", error);
                 showStatus("Error saving profile", false);
-                return false;
             }
         }
-        
-        // When document is loaded, set up event listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            logInfo("Page loaded, initializing profile page");
-            
-            // Load user profile data
-            loadUserProfile();
-            
-            // Save button event listener
-            document.getElementById('save-btn').addEventListener('click', async () => {
-                logInfo("Save button clicked");
-                const success = await saveUserProfile();
-                
-                if (success) {
-                    // Clear password fields
-                    document.getElementById('new-password').value = '';
-                    document.getElementById('confirm-password').value = '';
-                }
-            });
-            
-            // Cancel button event listener
-            document.getElementById('cancel-btn').addEventListener('click', () => {
-                logInfo("Cancel button clicked, reloading profile data");
-                loadUserProfile();
-            });
+    
+        // Wait for user login
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                loadUserProfile(user.uid);
+            } else {
+                logInfo("No user is signed in.");
+                showStatus("You must be logged in to view this page", false);
+            }
         });
-    </script>
+    
+        document.getElementById('save-btn').addEventListener('click', () => {
+            if (currentUserId) {
+                saveUserProfile();
+            }
+        });
+    
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            if (currentUserId) {
+                loadUserProfile(currentUserId);
+            }
+        });
+    </script>    
 </body>
 </html>

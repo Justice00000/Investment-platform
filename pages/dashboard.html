@@ -1,243 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Life Stock Asset</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Life Stock Asset</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
 </head>
 <body class="bg-gray-900 text-white">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center space-x-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h1 class="text-2xl font-bold">Life Stock Asset</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <span class="text-lg user-name">Charles Crowther</span>
-                <a href="../pages/profile.html" class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center hover:bg-purple-600 transition">
-                    <span class="user-initials">CC</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-purple-600 p-4 rounded-lg">
-                <h2 class="text-sm mb-2">Account Balance</h2>
-                <p class="text-2xl font-bold" id="account-balance-display">25,000.00 USD</p>
-            </div>
-            <div class="bg-blue-500 p-4 rounded-lg">
-                <h2 class="text-sm mb-2">Total Withdraw</h2>
-                <p class="text-2xl font-bold" id="total-withdraw-display">0.00 USD</p>
-            </div>
-            <div class="bg-green-500 p-4 rounded-lg">
-                <h2 class="text-sm mb-2">Total Deposit</h2>
-                <p class="text-2xl font-bold" id="total-deposit-display">0.00 USD</p>
-            </div>
-            <div class="bg-red-500 p-4 rounded-lg">
-                <h2 class="text-sm mb-2">Total Invest</h2>
-                <p class="text-2xl font-bold" id="total-invest-display">2,500.00 USD</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-gray-800 p-4 rounded-lg relative">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">Investment Plans</h2>
-                    <a href="../pages/invest.html" class="text-purple-400 hover:text-purple-300 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                </div>
-                <div class="space-y-4">
-                    <div class="bg-purple-700 p-4 rounded-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <h3 class="text-lg font-bold" id="plan-name-display">Gold Plan</h3>
-                            <span class="bg-purple-500 text-white px-2 py-1 rounded" id="roi-display">ROI 20.00%</span>
-                        </div>
-                        <div class="space-y-2">
-                            <p id="plan-min-display">Minimum: 1,000.00 USD</p>
-                            <p id="plan-max-display">Maximum: 2,500.00 USD</p>
-                            <p id="plan-duration-display">Duration: Every week</p>
-                            <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded mt-2">
-                                Invest Now
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
-                <div class="space-y-4">
-                    <a href="../pages/deposit.html" class="block">
-                        <button class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition">
-                            Deposit Funds
-                        </button>
-                    </a>
-                    <a href="../pages/withdraw.html" class="block">
-                        <button class="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 transition">
-                            Withdraw Funds
-                        </button>
-                    </a>
-                    <a href="../pages/history.html" class="block">
-                        <button class="w-full bg-purple-600 text-white py-3 rounded hover:bg-purple-700 transition">
-                            View Transactions
-                        </button>
-                    </a>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 p-4 rounded-lg">
-                <h2 class="text-xl font-semibold mb-4">Referral Program</h2>
-                <div class="text-center">
-                    <p class="mb-4">Earn extra by referring friends!</p>
-                    <p class="text-2xl font-bold text-green-500 mb-4" id="referral-earnings-display">0.00 USD</p>
-                    <button class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded">
-                        Invite Friends
-                    </button>
-                </div>
-            </div>
-        </div>
+  <div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div class="flex items-center space-x-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        <h1 class="text-2xl font-bold">Life Stock Asset</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="text-lg user-name" id="fullName">Loading...</span>
+        <a href="../pages/profile.html" class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center hover:bg-purple-600 transition">
+          <span class="user-initials">--</span>
+        </a>
+      </div>
     </div>
 
-    <!-- Firebase modules -->
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-        
-        // Your Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
-            authDomain: "invest-6c18d.firebaseapp.com",
-            projectId: "invest-6c18d",
-            storageBucket: "invest-6c18d.firebasestorage.app",
-            messagingSenderId: "401038787144",
-            appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
-            measurementId: "G-GL5QZ99F5F"
-        };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        
-        // User ID - in a real app, this would come from authentication
-        const USER_ID = "USR123456";
-        
-        // Function to format number with commas
-        function formatNumberWithCommas(number) {
-            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        }
-        
-        // Function to update dashboard with data from Firestore
-        async function updateDashboardFromFirestore() {
-            try {
-                // Get the document from Firestore
-                const docRef = doc(db, "dashboards", USER_ID);
-                const docSnap = await getDoc(docRef);
-                
-                if (!docSnap.exists()) {
-                    console.log('No data found in Firestore');
-                    return;
-                }
-                
-                // Get the data
-                const dashboardData = docSnap.data();
-                
-                console.log('Data loaded from Firestore:', dashboardData);
-                
-                // Update user name
-                document.querySelector('.user-name').textContent = dashboardData.user.name;
-                
-                // Update user initials
-                const nameParts = dashboardData.user.name.split(' ');
-                let initials = '';
-                if (nameParts.length >= 2) {
-                    initials = nameParts[0].charAt(0) + nameParts[1].charAt(0);
-                } else {
-                    initials = nameParts[0].charAt(0);
-                }
-                document.querySelector('.user-initials').textContent = initials;
-                
-                // Update balances
-                document.getElementById('account-balance-display').textContent = 
-                    formatNumberWithCommas(dashboardData.balances.accountBalance.toFixed(2)) + " USD";
-                    
-                document.getElementById('total-withdraw-display').textContent = 
-                    formatNumberWithCommas(dashboardData.balances.totalWithdraw.toFixed(2)) + " USD";
-                    
-                document.getElementById('total-deposit-display').textContent = 
-                    formatNumberWithCommas(dashboardData.balances.totalDeposit.toFixed(2)) + " USD";
-                    
-                document.getElementById('total-invest-display').textContent = 
-                    formatNumberWithCommas(dashboardData.balances.totalInvest.toFixed(2)) + " USD";
-                
-                // Update plan details
-                document.getElementById('plan-name-display').textContent = dashboardData.plan.name;
-                document.getElementById('roi-display').textContent = "ROI " + dashboardData.plan.roi.toFixed(2) + "%";
-                document.getElementById('plan-min-display').textContent = 
-                    "Minimum: " + formatNumberWithCommas(dashboardData.plan.min.toFixed(2)) + " USD";
-                document.getElementById('plan-max-display').textContent = 
-                    "Maximum: " + formatNumberWithCommas(dashboardData.plan.max.toFixed(2)) + " USD";
-                
-                // Convert duration value to readable text
-                let durationText = "Every week";
-                switch(dashboardData.plan.duration) {
-                    case 'daily':
-                        durationText = "Daily";
-                        break;
-                    case 'weekly':
-                        durationText = "Every week";
-                        break;
-                    case 'biweekly':
-                        durationText = "Every 2 weeks";
-                        break;
-                    case 'monthly':
-                        durationText = "Monthly";
-                        break;
-                }
-                document.getElementById('plan-duration-display').textContent = "Duration: " + durationText;
-                
-                // Update referral earnings
-                document.getElementById('referral-earnings-display').textContent = 
-                    formatNumberWithCommas(dashboardData.referral.earnings.toFixed(2)) + " USD";
-                
-                console.log('Dashboard updated successfully with data from Firestore');
-            } catch (error) {
-                console.error('Error updating dashboard:', error);
-            }
-        }
+    <!-- Dashboard Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-purple-600 p-4 rounded-lg">
+        <h2 class="text-sm mb-2">Account Balance</h2>
+        <p class="text-2xl font-bold" id="account-balance-display">Loading...</p>
+      </div>
+      <div class="bg-blue-500 p-4 rounded-lg">
+        <h2 class="text-sm mb-2">Total Withdraw</h2>
+        <p class="text-2xl font-bold" id="totalWithdraw">Loading...</p>
+      </div>
+      <div class="bg-green-500 p-4 rounded-lg">
+        <h2 class="text-sm mb-2">Total Deposit</h2>
+        <p class="text-2xl font-bold" id="totalDeposit">Loading...</p>
+      </div>
+      <div class="bg-red-500 p-4 rounded-lg">
+        <h2 class="text-sm mb-2">Total Invest</h2>
+        <p class="text-2xl font-bold" id="investmentTotal">Loading...</p>
+      </div>
+    </div>
 
-        // Set up real-time listener for the dashboard data
-        function setupRealtimeListener() {
-            const docRef = doc(db, "dashboards", USER_ID);
-            
-            // Create a listener that will update the dashboard whenever the data changes
-            return onSnapshot(docRef, (docSnap) => {
-                if (docSnap.exists()) {
-                    console.log("Real-time update received from Firestore");
-                    // Call the update function to refresh the UI
-                    updateDashboardFromFirestore();
-                }
-            }, (error) => {
-                console.error("Error setting up real-time listener:", error);
-            });
-        }
+    <!-- Main Sections -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Investment Plans -->
+      <div class="bg-gray-800 p-4 rounded-lg relative">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Investment Plans</h2>
+          <a href="../pages/invest.html" class="text-purple-400 hover:text-purple-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-purple-700 p-4 rounded-lg">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-bold" id="plan-name-display">Loading...</h3>
+              <span class="bg-purple-500 text-white px-2 py-1 rounded" id="roi-display">ROI --%</span>
+            </div>
+            <div class="space-y-2">
+              <p id="plan-min-display">Minimum: -- USD</p>
+              <p id="plan-max-display">Maximum: -- USD</p>
+              <p id="plan-duration-display">Duration: --</p>
+              <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded mt-2">
+                Invest Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Dashboard initializing...');
-            
-            // Initial update
-            updateDashboardFromFirestore();
-            
-            // Set up real-time updates
-            const unsubscribe = setupRealtimeListener();
+      <!-- Quick Actions -->
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div class="space-y-4">
+          <a href="../pages/deposit.html">
+            <button class="w-full bg-blue-600 text-white py-3 rounded hover:bg-blue-700 transition">Deposit Funds</button>
+          </a>
+          <a href="../pages/withdraw.html">
+            <button class="w-full bg-green-600 text-white py-3 rounded hover:bg-green-700 transition">Withdraw Funds</button>
+          </a>
+          <a href="../pages/history.html">
+            <button class="w-full bg-purple-600 text-white py-3 rounded hover:bg-purple-700 transition">View Transactions</button>
+          </a>
+        </div>
+      </div>
+
+      <!-- Referral Program -->
+      <div class="bg-gray-800 p-4 rounded-lg">
+        <h2 class="text-xl font-semibold mb-4">Referral Program</h2>
+        <div class="text-center">
+          <p class="mb-4">Earn extra by referring friends!</p>
+          <p class="text-2xl font-bold text-green-500 mb-4" id="referral-earnings-display">Loading...</p>
+          <button class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 rounded">
+            Invite Friends
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+      authDomain: "invest-6c18d.firebaseapp.com",
+      projectId: "invest-6c18d",
+      storageBucket: "invest-6c18d.appspot.com",
+      messagingSenderId: "401038787144",
+      appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+      measurementId: "G-GL5QZ99F5F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+
+    function formatNumberWithCommas(number) {
+      return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function updateDashboardFromFirestore(userId) {
+      const docRef = doc(db, "dashboards", userId);
+      getDoc(docRef).then(docSnap => {
+        try {
+          if (!docSnap.exists()) return;
+
+          const dashboardData = docSnap.data();
+          document.getElementById('fullName').textContent = dashboardData.fullName ?? "Unknown";
+          const nameParts = (dashboardData.fullName ?? "--").split(' ');
+          document.querySelector('.user-initials').textContent = nameParts.map(n => n.charAt(0)).join('').substring(0, 2);
+
+          document.getElementById('account-balance-display').textContent =
+            formatNumberWithCommas((dashboardData.accountBalance ?? 0).toFixed(2)) + " USD";
+
+          document.getElementById('totalWithdraw').textContent =
+            formatNumberWithCommas((dashboardData.totalWithdraw ?? 0).toFixed(2)) + " USD";
+
+          document.getElementById('totalDeposit').textContent =
+            formatNumberWithCommas((dashboardData.totalDeposit ?? 0).toFixed(2)) + " USD";
+
+          document.getElementById('investmentTotal').textContent =
+            formatNumberWithCommas((dashboardData.investmentTotal ?? 0).toFixed(2)) + " USD";
+
+          const plan = dashboardData.plan ?? {};
+          document.getElementById('plan-name-display').textContent = plan.name ?? "--";
+          document.getElementById('roi-display').textContent = "ROI " + (plan.roi ?? 0).toFixed(2) + "%";
+          document.getElementById('plan-min-display').textContent =
+            "Minimum: " + formatNumberWithCommas((plan.min ?? 0).toFixed(2)) + " USD";
+          document.getElementById('plan-max-display').textContent =
+            "Maximum: " + formatNumberWithCommas((plan.max ?? 0).toFixed(2)) + " USD";
+
+          const durationMap = {
+            daily: "Daily",
+            weekly: "Every week",
+            biweekly: "Every 2 weeks",
+            monthly: "Monthly"
+          };
+          document.getElementById('plan-duration-display').textContent =
+            "Duration: " + (durationMap[plan.duration] ?? "--");
+
+          const referral = dashboardData.referral ?? {};
+          document.getElementById('referral-earnings-display').textContent =
+            formatNumberWithCommas((referral.earnings ?? 0).toFixed(2)) + " USD";
+        } catch (error) {
+          console.error("Error updating dashboard:", error);
+        }
+      });
+    }
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        updateDashboardFromFirestore(user.uid);
+        onSnapshot(doc(db, "dashboards", user.uid), () => {
+          updateDashboardFromFirestore(user.uid);
         });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
