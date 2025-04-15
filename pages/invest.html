@@ -1,183 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invest - Investment Platform</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../styles/dashboard.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invest - Investment Platform</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="../styles/dashboard.css"/>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+    import emailjs from "https://cdn.jsdelivr.net/npm/emailjs-com@3.2.0/+esm";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
+      authDomain: "invest-6c18d.firebaseapp.com",
+      projectId: "invest-6c18d",
+      storageBucket: "invest-6c18d.appspot.com",
+      messagingSenderId: "401038787144",
+      appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
+      measurementId: "G-GL5QZ99F5F"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const userId = "USER_ID"; // Replace this with dynamic user ID
+
+    const calculateButton = document.getElementById("calculate-returns");
+    const investmentInput = document.getElementById("investment-amount");
+    const planSelect = document.getElementById("investment-plan");
+    const weeklyROI = document.getElementById("weekly-roi");
+    const monthlyROI = document.getElementById("monthly-roi");
+    const yearlyROI = document.getElementById("yearly-roi");
+
+    function calculateReturns() {
+      const amount = parseFloat(investmentInput.value);
+      const rate = 0.2;
+      if (!amount || amount < 1000 || amount > 7500) {
+        alert("Please enter an amount between $1,000 and $7,500.");
+        return;
+      }
+      const weekly = amount * rate;
+      const monthly = weekly * 4;
+      const yearly = weekly * 52;
+
+      weeklyROI.textContent = `$${weekly.toFixed(2)}`;
+      monthlyROI.textContent = `$${monthly.toFixed(2)}`;
+      yearlyROI.textContent = `$${yearly.toFixed(2)}`;
+    }
+
+    calculateButton.addEventListener("click", calculateReturns);
+
+    async function handleInvestment(plan) {
+      const plans = {
+        gold: { min: 1000, max: 2500 },
+        diamond: { min: 2500, max: 4000 },
+        vip: { min: 4000, max: 7500 }
+      };
+      const amount = parseFloat(investmentInput.value);
+      const selected = plans[plan];
+
+      if (!amount || amount < selected.min || amount > selected.max) {
+        alert(`Amount must be between $${selected.min} and $${selected.max} for the ${plan.toUpperCase()} plan.`);
+        return;
+      }
+
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        alert("User not found.");
+        return;
+      }
+
+      const user = userSnap.data();
+      const balance = user.balance || 0;
+
+      if (balance < amount) {
+        alert("Insufficient balance to invest in this plan.");
+        return;
+      }
+
+      const newBalance = balance - amount;
+
+      await updateDoc(userRef, {
+        balance: newBalance,
+        plan: plan,
+        investment: amount
+      });
+
+      // Optional EmailJS integration
+      emailjs.send("service_id", "template_id", {
+        user_email: user.email,
+        plan_name: plan,
+        amount: amount
+      }, "public_key");
+
+      alert(`Successfully invested $${amount} in the ${plan.toUpperCase()} plan! New balance: $${newBalance.toFixed(2)}`);
+    }
+
+    document.querySelectorAll(".invest-btn").forEach((btn) => {
+      const plan = btn.getAttribute("data-plan");
+      btn.addEventListener("click", () => handleInvestment(plan));
+    });
+  </script>
 </head>
 <body class="bg-gray-900 text-white">
-    <div class="container mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-bold">Investment Plans</h1>
-            <div class="flex items-center space-x-4">
-                <span class="text-lg">Current Balance: $6,060.00</span>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
-                <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
-                    <h2 class="text-xl font-bold text-white">Gold Plan</h2>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <span class="text-4xl font-bold text-purple-400">20.00%</span>
-                        <span class="text-gray-400 ml-2">Weekly ROI</span>
-                    </div>
-                    <ul class="space-y-3 mb-6 text-gray-300">
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Minimum Investment: $1,000
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Maximum Investment: $2,500
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Weekly Payout
-                        </li>
-                    </ul>
-                    <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition">
-                        Invest in Gold Plan
-                    </button>
-                </div>
-            </div>
-            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
-                <div class="bg-gradient-to-r from-blue-500 to-green-500 p-4">
-                    <h2 class="text-xl font-bold text-white">Diamond Plan</h2>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <span class="text-4xl font-bold text-blue-400">20.00%</span>
-                        <span class="text-gray-400 ml-2">Weekly ROI</span>
-                    </div>
-                    <ul class="space-y-3 mb-6 text-gray-300">
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Minimum Investment: $2,500
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Maximum Investment: $4,000
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Weekly Payout
-                        </li>
-                    </ul>
-                    <button class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg hover:opacity-90 transition">
-                        Invest in Diamond Plan
-                    </button>
-                </div>
-            </div>
-            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
-                <div class="bg-gradient-to-r from-red-500 to-yellow-500 p-4">
-                    <h2 class="text-xl font-bold text-white">VIP Plan</h2>
-                </div>
-                <div class="p-6">
-                    <div class="mb-4">
-                        <span class="text-4xl font-bold text-red-400">20.00%</span>
-                        <span class="text-gray-400 ml-2">Weekly ROI</span>
-                    </div>
-                    <ul class="space-y-3 mb-6 text-gray-300">
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Minimum Investment: $4,000
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Maximum Investment: $7,500
-                        </li>
-                        <li class="flex items-center">
-                            <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Weekly Payout
-                        </li>
-                    </ul>
-                    <button class="w-full bg-gradient-to-r from-red-500 to-yellow-500 text-white py-3 rounded-lg hover:opacity-90 transition">
-                        Invest in VIP Plan
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-12 bg-gray-800 rounded-xl p-6">
-            <h2 class="text-2xl font-bold mb-6 text-center">Investment Calculator</h2>
-            <div class="grid md:grid-cols-2 gap-6">
-                <div>
-                    <label for="investment-amount" class="block text-sm font-medium text-gray-300 mb-2">
-                        Investment Amount ($)
-                    </label>
-                    <input 
-                        type="number" 
-                        id="investment-amount" 
-                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                        placeholder="Enter investment amount"
-                        min="1000"
-                        max="7500"
-                    >
-                </div>
-                <div>
-                    <label for="investment-plan" class="block text-sm font-medium text-gray-300 mb-2">
-                        Select Investment Plan
-                    </label>
-                    <select 
-                        id="investment-plan" 
-                        class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
-                    >
-                        <option value="gold">Gold Plan (1,000 - 2,500)</option>
-                        <option value="diamond">Diamond Plan (2,500 - 4,000)</option>
-                        <option value="vip">VIP Plan (4,000 - 7,500)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="mt-6 bg-gray-700 p-4 rounded-lg">
-                <h3 class="text-xl font-semibold mb-4 text-center">Estimated Returns</h3>
-                <div class="grid md:grid-cols-3 gap-4 text-center">
-                    <div>
-                        <p class="text-gray-400">Weekly ROI</p>
-                        <p id="weekly-roi" class="text-2xl font-bold text-green-500">$0.00</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-400">Monthly Return</p>
-                        <p id="monthly-roi" class="text-2xl font-bold text-blue-500">$0.00</p>
-                    </div>
-                    <div>
-                        <p class="text-gray-400">Yearly Projection</p>
-                        <p id="yearly-roi" class="text-2xl font-bold text-purple-500">$0.00</p>
-                    </div>
-                </div>
-            </div>
-            <div class="mt-6 text-center">
-                <button 
-                    id="calculate-returns"
-                    class="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition"
-                >
-                    Calculate Returns
-                </button>
-            </div>
-        </div>
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-2xl font-bold">Investment Plans</h1>
+      <div class="flex items-center space-x-4">
+        <span class="text-lg">Current Balance: <span id="balance-display">$0.00</span></span>
+      </div>
     </div>
 
-    <script src="../scripts/investment.js"></script>
+    <!-- Investment Plans -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Gold Plan -->
+      <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
+        <div class="bg-gradient-to-r from-purple-500 to-pink-500 p-4">
+          <h2 class="text-xl font-bold text-white">Gold Plan</h2>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <span class="text-4xl font-bold text-purple-400">20.00%</span>
+            <span class="text-gray-400 ml-2">Weekly ROI</span>
+          </div>
+          <ul class="space-y-3 mb-6 text-gray-300">
+            <li class="flex items-center">
+              ✅ Minimum Investment: $1,000
+            </li>
+            <li class="flex items-center">
+              ✅ Maximum Investment: $2,500
+            </li>
+            <li class="flex items-center">
+              ✅ Weekly Payout
+            </li>
+          </ul>
+          <button 
+            class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
+            data-plan="gold"
+          >
+            Invest in Gold Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- Diamond Plan -->
+      <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
+        <div class="bg-gradient-to-r from-blue-500 to-green-500 p-4">
+          <h2 class="text-xl font-bold text-white">Diamond Plan</h2>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <span class="text-4xl font-bold text-blue-400">20.00%</span>
+            <span class="text-gray-400 ml-2">Weekly ROI</span>
+          </div>
+          <ul class="space-y-3 mb-6 text-gray-300">
+            <li class="flex items-center">✅ Minimum Investment: $2,500</li>
+            <li class="flex items-center">✅ Maximum Investment: $4,000</li>
+            <li class="flex items-center">✅ Weekly Payout</li>
+          </ul>
+          <button 
+            class="w-full bg-gradient-to-r from-blue-500 to-green-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
+            data-plan="diamond"
+          >
+            Invest in Diamond Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- VIP Plan -->
+      <div class="bg-gray-800 rounded-xl overflow-hidden shadow-2xl transform transition hover:scale-105">
+        <div class="bg-gradient-to-r from-red-500 to-yellow-500 p-4">
+          <h2 class="text-xl font-bold text-white">VIP Plan</h2>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <span class="text-4xl font-bold text-red-400">20.00%</span>
+            <span class="text-gray-400 ml-2">Weekly ROI</span>
+          </div>
+          <ul class="space-y-3 mb-6 text-gray-300">
+            <li class="flex items-center">✅ Minimum Investment: $4,000</li>
+            <li class="flex items-center">✅ Maximum Investment: $7,500</li>
+            <li class="flex items-center">✅ Weekly Payout</li>
+          </ul>
+          <button 
+            class="w-full bg-gradient-to-r from-red-500 to-yellow-500 text-white py-3 rounded-lg hover:opacity-90 transition invest-btn"
+            data-plan="vip"
+          >
+            Invest in VIP Plan
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Investment Calculator -->
+    <div class="mt-12 bg-gray-800 rounded-xl p-6">
+      <h2 class="text-2xl font-bold mb-6 text-center">Investment Calculator</h2>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label for="investment-amount" class="block text-sm font-medium text-gray-300 mb-2">
+            Investment Amount ($)
+          </label>
+          <input 
+            type="number" 
+            id="investment-amount" 
+            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+            placeholder="Enter investment amount"
+            min="1000"
+            max="7500"
+          >
+        </div>
+        <div>
+          <label for="investment-plan" class="block text-sm font-medium text-gray-300 mb-2">
+            Select Investment Plan
+          </label>
+          <select 
+            id="investment-plan" 
+            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-purple-500 focus:outline-none"
+          >
+            <option value="gold">Gold Plan (1,000 - 2,500)</option>
+            <option value="diamond">Diamond Plan (2,500 - 4,000)</option>
+            <option value="vip">VIP Plan (4,000 - 7,500)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Estimated Returns -->
+      <div class="mt-6 bg-gray-700 p-4 rounded-lg">
+        <h3 class="text-xl font-semibold mb-4 text-center">Estimated Returns</h3>
+        <div class="grid md:grid-cols-3 gap-4 text-center">
+          <div>
+            <p class="text-gray-400">Weekly ROI</p>
+            <p id="weekly-roi" class="text-2xl font-bold text-green-500">$0.00</p>
+          </div>
+          <div>
+            <p class="text-gray-400">Monthly Return</p>
+            <p id="monthly-roi" class="text-2xl font-bold text-blue-500">$0.00</p>
+          </div>
+          <div>
+            <p class="text-gray-400">Yearly Projection</p>
+            <p id="yearly-roi" class="text-2xl font-bold text-purple-500">$0.00</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-6 text-center">
+        <button 
+          id="calculate-returns"
+          class="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition"
+        >
+          Calculate Returns
+        </button>
+      </div>
+    </div>
+  </div>
+  <script src="../scripts/investment.js"></script>
 </body>
 </html>
