@@ -97,11 +97,11 @@
         investment: amount
       });
 
-      emailjs.send("service_id", "template_id", {
+      emailjs.send("service_538bgur", "template_zzwo3cj", {
         user_email: userData.email,
         plan_name: plan,
         amount: amount
-      }, "public_key");
+      }, "g4dU-gdpiGoL3yIER");
 
       alert(`Successfully invested $${amount} in the ${plan.toUpperCase()} plan! New balance: $${newBalance.toFixed(2)}`);
     }
