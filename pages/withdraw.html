@@ -227,7 +227,10 @@
                 
                 // Get the data and update the balance display
                 const dashboardData = docSnap.data();
-                const balance = dashboardData.balances?.accountBalance || 0;
+                console.log('Dashboard data:', dashboardData); // Debug - log the data structure
+                
+                // Access accountBalance directly from the root of the document
+                const balance = dashboardData.accountBalance || 0;
                 
                 // Update the maximum withdrawal amount based on available balance
                 document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance.toFixed(2));
@@ -253,8 +256,8 @@
                 }
                 
                 const dashboardData = docSnap.data();
-                const currentBalance = dashboardData.balances?.accountBalance || 0;
-                const currentWithdraws = dashboardData.balances?.totalWithdraw || 0;
+                const currentBalance = dashboardData.accountBalance || 0;
+                const currentWithdraws = dashboardData.totalWithdraw || 0;
                 
                 // Check if amount is valid
                 if (amount > currentBalance) {
@@ -275,16 +278,10 @@
                 const withdrawals = dashboardData.withdrawals || [];
                 withdrawals.push(withdrawal);
                 
-                // Create or update balances object
-                const balances = dashboardData.balances || {};
-                
-                // Update the balances
+                // Update the document
                 const updatedData = {
-                    balances: {
-                        ...balances,
-                        accountBalance: currentBalance - amount,
-                        totalWithdraw: currentWithdraws + amount
-                    },
+                    accountBalance: currentBalance - amount,
+                    totalWithdraw: currentWithdraws + amount,
                     withdrawals
                 };
                 
