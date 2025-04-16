@@ -186,7 +186,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-        
+    
         // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
@@ -197,75 +197,59 @@
             appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
             measurementId: "G-GL5QZ99F5F"
         };
-        
+    
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
+    
         let currentUser = null;
-        
-        // Function to format number with commas
+    
         function formatNumberWithCommas(number) {
             return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
-        
-        // Function to load user balance data
+    
         async function loadUserBalanceData(userId) {
             try {
-                console.log('Loading balance for user:', userId);
-                
-                // Get the document from Firestore
                 const docRef = doc(db, "dashboards", userId);
                 const docSnap = await getDoc(docRef);
-                
+    
                 if (!docSnap.exists()) {
-                    console.log('No data found in Firestore for user:', userId);
                     document.getElementById('available-balance').textContent = '$0.00';
                     return;
                 }
-                
-                // Get the data and update the balance display
+    
                 const dashboardData = docSnap.data();
-                console.log('Dashboard data:', dashboardData); // Debug - log the data structure
-                
-                // Access accountBalance directly from the root of the document
                 const balance = dashboardData.accountBalance || 0;
-                
-                // Update the maximum withdrawal amount based on available balance
+    
                 document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance.toFixed(2));
                 document.getElementById('withdrawal-amount').max = balance;
-                
-                console.log('Balance loaded successfully:', balance);
+    
             } catch (error) {
                 console.error('Error loading balance data:', error);
                 document.getElementById('available-balance').textContent = 'Error loading balance';
             }
         }
-        
-        // Function to record the withdrawal in Firebase
+    
+        // Updated function to delay balance update by 10 minutes
         async function recordWithdrawal(userId, method, details, amount) {
             try {
-                // Get the current user data
                 const docRef = doc(db, "dashboards", userId);
                 const docSnap = await getDoc(docRef);
-                
+    
                 if (!docSnap.exists()) {
                     console.error('User data not found');
                     return false;
                 }
-                
+    
                 const dashboardData = docSnap.data();
                 const currentBalance = dashboardData.accountBalance || 0;
-                const currentWithdraws = dashboardData.totalWithdraw || 0;
-                
-                // Check if amount is valid
+    
                 if (amount > currentBalance) {
                     alert('Withdrawal amount exceeds available balance');
                     return false;
                 }
-                
-                // Create a withdrawal record
+    
                 const withdrawal = {
                     method,
                     details,
@@ -273,77 +257,76 @@
                     date: new Date().toISOString(),
                     status: 'pending'
                 };
-                
-                // Update user document
+    
                 const withdrawals = dashboardData.withdrawals || [];
                 withdrawals.push(withdrawal);
-                
-                // Update the document
-                const updatedData = {
-                    accountBalance: currentBalance - amount,
-                    totalWithdraw: currentWithdraws + amount,
-                    withdrawals
-                };
-                
-                await updateDoc(docRef, updatedData);
-                console.log('Withdrawal recorded successfully');
+    
+                // Save the withdrawal immediately
+                await updateDoc(docRef, {
+                    withdrawals: withdrawals
+                });
+    
+                console.log('Withdrawal request recorded. Balance will update in 10 minutes.');
+    
+                // Delay balance update
+                setTimeout(async () => {
+                    try {
+                        const updatedDocSnap = await getDoc(docRef);
+                        const updatedData = updatedDocSnap.data();
+    
+                        const newBalance = (updatedData.accountBalance || 0) - amount;
+                        const newTotalWithdraw = (updatedData.totalWithdraw || 0) + amount;
+    
+                        await updateDoc(docRef, {
+                            accountBalance: newBalance,
+                            totalWithdraw: newTotalWithdraw
+                        });
+    
+                        console.log('Balance updated after 10-minute delay.');
+                    } catch (err) {
+                        console.error('Error in delayed balance update:', err);
+                    }
+                }, 10 * 60 * 1000);
+    
                 return true;
             } catch (error) {
                 console.error('Error recording withdrawal:', error);
                 return false;
             }
         }
-        
-        // Modal functionality
+    
         function showModal() {
             document.getElementById('success-modal').classList.add('show');
         }
-        
+    
         function hideModal() {
             document.getElementById('success-modal').classList.remove('show');
         }
-        
-        // Auth state monitoring function
+    
         function monitorAuthState() {
             onAuthStateChanged(auth, user => {
                 if (user) {
-                    console.log('User is logged in:', user.uid);
                     currentUser = user;
                     loadUserBalanceData(user.uid);
                 } else {
-                    console.log('No user is logged in, redirecting to login');
-                    // Redirect to login page
                     window.location.href = '/login.html';
                 }
             });
         }
-        
-        // When document is loaded, set up event listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Withdraw page initializing...');
-            
-            // Start monitoring auth state
+    
+        document.addEventListener('DOMContentLoaded', function () {
             monitorAuthState();
-            
-            // Withdrawal Method Selection
+    
             document.querySelectorAll('.withdrawal-method').forEach(method => {
                 method.addEventListener('click', () => {
-                    // Get the method type
                     const methodType = method.dataset.method;
-                    
-                    // Remove selected class from all methods
-                    document.querySelectorAll('.withdrawal-method').forEach(m => {
-                        m.classList.remove('withdrawal-selected');
-                    });
-                    
-                    // Add selected class to clicked method
+                    document.querySelectorAll('.withdrawal-method').forEach(m => m.classList.remove('withdrawal-selected'));
                     method.classList.add('withdrawal-selected');
-                    
-                    // Show the appropriate form fields
+    
                     document.getElementById('crypto-details').classList.add('hidden');
                     document.getElementById('bank-details').classList.add('hidden');
                     document.getElementById('paypal-details').classList.add('hidden');
-                    
+    
                     if (methodType === 'crypto') {
                         document.getElementById('crypto-details').classList.remove('hidden');
                     } else if (methodType === 'bank') {
@@ -353,97 +336,86 @@
                     }
                 });
             });
-
-            // Close modal button
+    
             document.getElementById('close-modal').addEventListener('click', () => {
                 hideModal();
             });
-
-            // Submit Withdrawal Request
+    
             document.getElementById('submit-withdrawal').addEventListener('click', async () => {
                 if (!currentUser) {
                     alert('You must be logged in to make a withdrawal');
                     window.location.href = '/login.html';
                     return;
                 }
-                
+    
                 const selectedMethodElement = document.querySelector('.withdrawal-selected');
                 if (!selectedMethodElement) {
                     alert('Please select a withdrawal method');
                     return;
                 }
-                
+    
                 const selectedMethod = selectedMethodElement.dataset.method;
                 const amount = parseFloat(document.getElementById('withdrawal-amount').value);
-                
-                // Validate amount
+    
                 if (!amount || isNaN(amount)) {
                     alert('Please enter a valid withdrawal amount');
                     return;
                 }
-                
+    
                 if (amount < 50) {
                     alert('Minimum withdrawal is $50');
                     return;
                 }
-                
-                // Get method-specific details
+    
                 let details = {};
-                
+    
                 if (selectedMethod === 'crypto') {
                     const cryptoType = document.getElementById('crypto-type').value;
                     const walletAddress = document.getElementById('wallet-address').value;
-                    
+    
                     if (!walletAddress) {
                         alert('Please enter your wallet address');
                         return;
                     }
-                    
+    
                     details = { cryptoType, walletAddress };
                 } else if (selectedMethod === 'bank') {
                     const bankName = document.getElementById('bank-name').value;
                     const accountNumber = document.getElementById('account-number').value;
                     const accountName = document.getElementById('account-name').value;
-                    
+    
                     if (!bankName || !accountNumber || !accountName) {
                         alert('Please fill in all bank details');
                         return;
                     }
-                    
+    
                     details = { bankName, accountNumber, accountName };
                 } else if (selectedMethod === 'paypal') {
                     const paypalEmail = document.getElementById('paypal-email').value;
-                    
+    
                     if (!paypalEmail) {
                         alert('Please enter your PayPal email');
                         return;
                     }
-                    
+    
                     details = { paypalEmail };
                 }
-                
-                // Record the withdrawal in Firebase
+    
                 const success = await recordWithdrawal(currentUser.uid, selectedMethod, details, amount);
-                
+    
                 if (success) {
-                    // Update the modal content
                     document.getElementById('modal-method').textContent = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
                     document.getElementById('modal-amount').textContent = '$' + formatNumberWithCommas(amount.toFixed(2));
                     document.getElementById('modal-date').textContent = new Date().toLocaleDateString();
-                    
-                    // Show success modal
+    
                     showModal();
-                    
-                    // Update the balance display
                     loadUserBalanceData(currentUser.uid);
-                    
-                    // Reset form
                     document.getElementById('withdrawal-amount').value = '';
                 } else {
                     alert('Failed to process withdrawal request. Please try again later.');
                 }
             });
         });
-    </script>
+    </script>    
 </body>
 </html>
