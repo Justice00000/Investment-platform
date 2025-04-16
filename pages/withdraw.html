@@ -42,7 +42,7 @@
             <div class="bg-gray-700 p-6 rounded-lg mb-6">
                 <div class="flex justify-between items-center mb-4">
                     <span class="text-xl font-semibold">Available Balance</span>
-                    <span id="available-balance" class="text-2xl font-bold text-green-500">$25,000.00</span>
+                    <span id="available-balance" class="text-2xl font-bold text-green-500">Loading...</span>
                 </div>
             </div>
 
@@ -171,7 +171,7 @@
                 <div id="withdrawal-details" class="bg-gray-800 p-4 rounded-lg text-left mb-6">
                     <p><strong>Method:</strong> <span id="modal-method">Cryptocurrency</span></p>
                     <p><strong>Amount:</strong> <span id="modal-amount">$500</span></p>
-                    <p><strong>Date:</strong> <span id="modal-date">April 11, 2025</span></p>
+                    <p><strong>Date:</strong> <span id="modal-date">April 16, 2025</span></p>
                 </div>
                 <button id="close-modal" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
                     Close
@@ -183,15 +183,16 @@
     <!-- Firebase modules -->
     <script type="module">
         // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         
         // Your Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCWuFq3ZYhLdjVrKKa7RH2_T_f1Ct4rtIY",
             authDomain: "invest-6c18d.firebaseapp.com",
             projectId: "invest-6c18d",
-            storageBucket: "invest-6c18d.firebasestorage.app",
+            storageBucket: "invest-6c18d.appspot.com",
             messagingSenderId: "401038787144",
             appId: "1:401038787144:web:949e93e8ff282fdd294e7d",
             measurementId: "G-GL5QZ99F5F"
@@ -199,10 +200,10 @@
         
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
         
-        // User ID - in a real app, this would come from authentication
-        const USER_ID = "USR123456";
+        let currentUser = null;
         
         // Function to format number with commas
         function formatNumberWithCommas(number) {
@@ -210,20 +211,23 @@
         }
         
         // Function to load user balance data
-        async function loadUserBalanceData() {
+        async function loadUserBalanceData(userId) {
             try {
+                console.log('Loading balance for user:', userId);
+                
                 // Get the document from Firestore
-                const docRef = doc(db, "dashboards", USER_ID);
+                const docRef = doc(db, "dashboards", userId);
                 const docSnap = await getDoc(docRef);
                 
                 if (!docSnap.exists()) {
-                    console.log('No data found in Firestore');
+                    console.log('No data found in Firestore for user:', userId);
+                    document.getElementById('available-balance').textContent = '$0.00';
                     return;
                 }
                 
                 // Get the data and update the balance display
                 const dashboardData = docSnap.data();
-                const balance = dashboardData.balances.accountBalance;
+                const balance = dashboardData.balances?.accountBalance || 0;
                 
                 // Update the maximum withdrawal amount based on available balance
                 document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance.toFixed(2));
@@ -232,14 +236,15 @@
                 console.log('Balance loaded successfully:', balance);
             } catch (error) {
                 console.error('Error loading balance data:', error);
+                document.getElementById('available-balance').textContent = 'Error loading balance';
             }
         }
         
         // Function to record the withdrawal in Firebase
-        async function recordWithdrawal(method, details, amount) {
+        async function recordWithdrawal(userId, method, details, amount) {
             try {
                 // Get the current user data
-                const docRef = doc(db, "dashboards", USER_ID);
+                const docRef = doc(db, "dashboards", userId);
                 const docSnap = await getDoc(docRef);
                 
                 if (!docSnap.exists()) {
@@ -248,8 +253,8 @@
                 }
                 
                 const dashboardData = docSnap.data();
-                const currentBalance = dashboardData.balances.accountBalance;
-                const currentWithdraws = dashboardData.balances.totalWithdraw || 0;
+                const currentBalance = dashboardData.balances?.accountBalance || 0;
+                const currentWithdraws = dashboardData.balances?.totalWithdraw || 0;
                 
                 // Check if amount is valid
                 if (amount > currentBalance) {
@@ -270,10 +275,13 @@
                 const withdrawals = dashboardData.withdrawals || [];
                 withdrawals.push(withdrawal);
                 
+                // Create or update balances object
+                const balances = dashboardData.balances || {};
+                
                 // Update the balances
                 const updatedData = {
                     balances: {
-                        ...dashboardData.balances,
+                        ...balances,
                         accountBalance: currentBalance - amount,
                         totalWithdraw: currentWithdraws + amount
                     },
@@ -298,12 +306,27 @@
             document.getElementById('success-modal').classList.remove('show');
         }
         
+        // Auth state monitoring function
+        function monitorAuthState() {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    console.log('User is logged in:', user.uid);
+                    currentUser = user;
+                    loadUserBalanceData(user.uid);
+                } else {
+                    console.log('No user is logged in, redirecting to login');
+                    // Redirect to login page
+                    window.location.href = '/login.html';
+                }
+            });
+        }
+        
         // When document is loaded, set up event listeners
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Withdraw page initializing...');
             
-            // Load the user's balance
-            loadUserBalanceData();
+            // Start monitoring auth state
+            monitorAuthState();
             
             // Withdrawal Method Selection
             document.querySelectorAll('.withdrawal-method').forEach(method => {
@@ -341,6 +364,12 @@
 
             // Submit Withdrawal Request
             document.getElementById('submit-withdrawal').addEventListener('click', async () => {
+                if (!currentUser) {
+                    alert('You must be logged in to make a withdrawal');
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
                 const selectedMethodElement = document.querySelector('.withdrawal-selected');
                 if (!selectedMethodElement) {
                     alert('Please select a withdrawal method');
@@ -397,7 +426,7 @@
                 }
                 
                 // Record the withdrawal in Firebase
-                const success = await recordWithdrawal(selectedMethod, details, amount);
+                const success = await recordWithdrawal(currentUser.uid, selectedMethod, details, amount);
                 
                 if (success) {
                     // Update the modal content
@@ -409,7 +438,7 @@
                     showModal();
                     
                     // Update the balance display
-                    loadUserBalanceData();
+                    loadUserBalanceData(currentUser.uid);
                     
                     // Reset form
                     document.getElementById('withdrawal-amount').value = '';
