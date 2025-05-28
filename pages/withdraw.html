@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdraw Funds</title>
+    <title>Withdraw Funds - Enhanced</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         /* Modal styles */
@@ -31,6 +31,22 @@
         
         .modal.show {
             display: flex;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #8b5cf6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -144,6 +160,7 @@
                         class="w-full bg-gray-600 text-white p-3 rounded-lg" 
                         placeholder="Enter withdrawal amount"
                         min="50"
+                        step="0.01"
                     >
                     <p class="text-sm text-gray-400 mt-2">Minimum withdrawal: $50</p>
                 </div>
@@ -165,15 +182,33 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <h3 class="text-xl font-bold mb-2">Withdrawal Request Submitted</h3>
-                <p class="mb-4">Your withdrawal request has been successfully submitted.</p>
-                <p class="text-yellow-400 font-bold mb-6">Configure Trade Account to Complete Withdrawal Process.</p>
+                <h3 class="text-xl font-bold mb-2">Withdrawal Request Processed</h3>
+                <p class="mb-4">Your withdrawal has been successfully processed and deducted from your balance.</p>
+                <p class="text-green-400 font-bold mb-6">Digital Cash Withdrawal Successfully Authorized.</p>
                 <div id="withdrawal-details" class="bg-gray-800 p-4 rounded-lg text-left mb-6">
                     <p><strong>Method:</strong> <span id="modal-method">Cryptocurrency</span></p>
                     <p><strong>Amount:</strong> <span id="modal-amount">$500</span></p>
+                    <p><strong>New Balance:</strong> <span id="modal-new-balance" class="text-green-500">$0</span></p>
                     <p><strong>Date:</strong> <span id="modal-date">April 16, 2025</span></p>
+                    <p><strong>Transaction ID:</strong> <span id="modal-transaction-id" class="text-yellow-400">TXN123456</span></p>
                 </div>
                 <button id="close-modal" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal">
+        <div class="modal-content">
+            <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <h3 class="text-xl font-bold mb-2">Withdrawal Failed</h3>
+                <p id="error-message" class="mb-6 text-red-400">An error occurred while processing your withdrawal.</p>
+                <button id="close-error-modal" class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
                     Close
                 </button>
             </div>
@@ -185,7 +220,7 @@
         // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, updateDoc, runTransaction } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     
         // Your Firebase configuration
         const firebaseConfig = {
@@ -204,11 +239,33 @@
         const db = getFirestore(app);
     
         let currentUser = null;
+        let currentBalance = 0;
     
+        // Utility Functions
         function formatNumberWithCommas(number) {
-            return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
-    
+
+        function generateTransactionId() {
+            return 'WD' + Date.now() + Math.random().toString(36).substr(2, 5).toUpperCase();
+        }
+
+        function validateInput(value, type = 'text') {
+            if (type === 'email') {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(value);
+            }
+            if (type === 'number') {
+                return !isNaN(value) && parseFloat(value) > 0;
+            }
+            return value && value.trim().length > 0;
+        }
+
+        function sanitizeInput(input) {
+            return input.trim().replace(/[<>]/g, '');
+        }
+
+        // Enhanced balance loading with error handling
         async function loadUserBalanceData(userId) {
             try {
                 const docRef = doc(db, "dashboards", userId);
@@ -216,93 +273,178 @@
     
                 if (!docSnap.exists()) {
                     document.getElementById('available-balance').textContent = '$0.00';
+                    currentBalance = 0;
                     return;
                 }
     
                 const dashboardData = docSnap.data();
                 const balance = dashboardData.accountBalance || 0;
+                currentBalance = balance;
     
-                document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance.toFixed(2));
+                document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(balance);
                 document.getElementById('withdrawal-amount').max = balance;
     
             } catch (error) {
                 console.error('Error loading balance data:', error);
                 document.getElementById('available-balance').textContent = 'Error loading balance';
+                showError('Failed to load account balance. Please refresh the page.');
             }
         }
-    
-        // Updated function to delay balance update by 10 minutes
-        async function recordWithdrawal(userId, method, details, amount) {
+
+        // Industry-standard atomic transaction for withdrawal processing
+        async function processWithdrawal(userId, method, details, amount) {
             try {
                 const docRef = doc(db, "dashboards", userId);
-                const docSnap = await getDoc(docRef);
-    
-                if (!docSnap.exists()) {
-                    console.error('User data not found');
-                    return false;
-                }
-    
-                const dashboardData = docSnap.data();
-                const currentBalance = dashboardData.accountBalance || 0;
-    
-                if (amount > currentBalance) {
-                    alert('Withdrawal amount exceeds available balance');
-                    return false;
-                }
-    
-                const withdrawal = {
-                    method,
-                    details,
-                    amount,
-                    date: new Date().toISOString(),
-                    status: 'pending'
-                };
-    
-                const withdrawals = dashboardData.withdrawals || [];
-                withdrawals.push(withdrawal);
-    
-                // Save the withdrawal immediately
-                await updateDoc(docRef, {
-                    withdrawals: withdrawals
-                });
-    
-                console.log('Withdrawal request recorded. Balance will update in 10 minutes.');
-    
-                // Delay balance update
-                setTimeout(async () => {
-                    try {
-                        const updatedDocSnap = await getDoc(docRef);
-                        const updatedData = updatedDocSnap.data();
-    
-                        const newBalance = (updatedData.accountBalance || 0) - amount;
-                        const newTotalWithdraw = (updatedData.totalWithdraw || 0) + amount;
-    
-                        await updateDoc(docRef, {
-                            accountBalance: newBalance,
-                            totalWithdraw: newTotalWithdraw
-                        });
-    
-                        console.log('Balance updated after 10-minute delay.');
-                    } catch (err) {
-                        console.error('Error in delayed balance update:', err);
+                
+                // Use Firestore transaction for atomic operations
+                const result = await runTransaction(db, async (transaction) => {
+                    const docSnap = await transaction.get(docRef);
+                    
+                    if (!docSnap.exists()) {
+                        throw new Error('User account not found');
                     }
-                }, 10 * 60 * 1000);
-    
-                return true;
+
+                    const dashboardData = docSnap.data();
+                    const currentBalance = dashboardData.accountBalance || 0;
+
+                    // Validate sufficient funds
+                    if (amount > currentBalance) {
+                        throw new Error(`Insufficient funds. Available: $${formatNumberWithCommas(currentBalance)}, Requested: $${formatNumberWithCommas(amount)}`);
+                    }
+
+                    // Generate unique transaction ID
+                    const transactionId = generateTransactionId();
+                    const timestamp = new Date().toISOString();
+
+                    // Create withdrawal record
+                    const withdrawal = {
+                        id: transactionId,
+                        method: method,
+                        details: details,
+                        amount: amount,
+                        date: timestamp,
+                        status: 'completed',
+                        processedAt: timestamp
+                    };
+
+                    // Calculate new balances
+                    const newAccountBalance = currentBalance - amount;
+                    const newTotalWithdraw = (dashboardData.totalWithdraw || 0) + amount;
+
+                    // Get existing withdrawals
+                    const withdrawals = dashboardData.withdrawals || [];
+                    withdrawals.push(withdrawal);
+
+                    // Atomic update - all or nothing
+                    transaction.update(docRef, {
+                        accountBalance: newAccountBalance,
+                        totalWithdraw: newTotalWithdraw,
+                        withdrawals: withdrawals,
+                        lastWithdrawal: {
+                            amount: amount,
+                            date: timestamp,
+                            method: method
+                        }
+                    });
+
+                    return {
+                        success: true,
+                        transactionId: transactionId,
+                        newBalance: newAccountBalance,
+                        withdrawal: withdrawal
+                    };
+                });
+
+                return result;
+
             } catch (error) {
-                console.error('Error recording withdrawal:', error);
-                return false;
+                console.error('Error processing withdrawal:', error);
+                return {
+                    success: false,
+                    error: error.message
+                };
             }
         }
-    
-        function showModal() {
+
+        // Modal functions
+        function showSuccessModal(method, amount, newBalance, transactionId) {
+            document.getElementById('modal-method').textContent = method.charAt(0).toUpperCase() + method.slice(1);
+            document.getElementById('modal-amount').textContent = '$' + formatNumberWithCommas(amount);
+            document.getElementById('modal-new-balance').textContent = '$' + formatNumberWithCommas(newBalance);
+            document.getElementById('modal-date').textContent = new Date().toLocaleDateString();
+            document.getElementById('modal-transaction-id').textContent = transactionId;
             document.getElementById('success-modal').classList.add('show');
         }
-    
-        function hideModal() {
-            document.getElementById('success-modal').classList.remove('show');
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error-modal').classList.add('show');
         }
-    
+
+        function hideModals() {
+            document.getElementById('success-modal').classList.remove('show');
+            document.getElementById('error-modal').classList.remove('show');
+        }
+
+        // Enhanced form validation
+        function validateWithdrawalForm(selectedMethod, amount) {
+            const errors = [];
+
+            if (!selectedMethod) {
+                errors.push('Please select a withdrawal method');
+            }
+
+            if (!amount || isNaN(amount) || amount <= 0) {
+                errors.push('Please enter a valid withdrawal amount');
+            }
+
+            if (amount < 50) {
+                errors.push('Minimum withdrawal amount is $50');
+            }
+
+            if (amount > currentBalance) {
+                errors.push(`Insufficient funds. Available balance: $${formatNumberWithCommas(currentBalance)}`);
+            }
+
+            // Method-specific validation
+            if (selectedMethod === 'crypto') {
+                const walletAddress = document.getElementById('wallet-address').value;
+                if (!validateInput(walletAddress)) {
+                    errors.push('Please enter a valid wallet address');
+                }
+            } else if (selectedMethod === 'bank') {
+                const bankName = sanitizeInput(document.getElementById('bank-name').value);
+                const accountNumber = sanitizeInput(document.getElementById('account-number').value);
+                const accountName = sanitizeInput(document.getElementById('account-name').value);
+
+                if (!validateInput(bankName) || !validateInput(accountNumber) || !validateInput(accountName)) {
+                    errors.push('Please fill in all bank details');
+                }
+            } else if (selectedMethod === 'paypal') {
+                const paypalEmail = document.getElementById('paypal-email').value;
+                if (!validateInput(paypalEmail, 'email')) {
+                    errors.push('Please enter a valid PayPal email address');
+                }
+            }
+
+            return errors;
+        }
+
+        // Button state management
+        function setButtonLoading(loading) {
+            const button = document.getElementById('submit-withdrawal');
+            if (loading) {
+                button.innerHTML = '<div class="loading-spinner"></div>Processing...';
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                button.innerHTML = 'Submit Withdrawal Request';
+                button.disabled = false;
+                button.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Authentication state monitoring
         function monitorAuthState() {
             onAuthStateChanged(auth, user => {
                 if (user) {
@@ -313,20 +455,24 @@
                 }
             });
         }
-    
+
+        // Main initialization
         document.addEventListener('DOMContentLoaded', function () {
             monitorAuthState();
-    
+
+            // Withdrawal method selection
             document.querySelectorAll('.withdrawal-method').forEach(method => {
                 method.addEventListener('click', () => {
                     const methodType = method.dataset.method;
                     document.querySelectorAll('.withdrawal-method').forEach(m => m.classList.remove('withdrawal-selected'));
                     method.classList.add('withdrawal-selected');
-    
+
+                    // Hide all details sections
                     document.getElementById('crypto-details').classList.add('hidden');
                     document.getElementById('bank-details').classList.add('hidden');
                     document.getElementById('paypal-details').classList.add('hidden');
-    
+
+                    // Show selected method details
                     if (methodType === 'crypto') {
                         document.getElementById('crypto-details').classList.remove('hidden');
                     } else if (methodType === 'bank') {
@@ -336,83 +482,102 @@
                     }
                 });
             });
-    
-            document.getElementById('close-modal').addEventListener('click', () => {
-                hideModal();
-            });
-    
+
+            // Modal close handlers
+            document.getElementById('close-modal').addEventListener('click', hideModals);
+            document.getElementById('close-error-modal').addEventListener('click', hideModals);
+
+            // Enhanced withdrawal submission
             document.getElementById('submit-withdrawal').addEventListener('click', async () => {
                 if (!currentUser) {
-                    alert('You must be logged in to make a withdrawal');
-                    window.location.href = '/login.html';
+                    showError('You must be logged in to make a withdrawal');
+                    setTimeout(() => window.location.href = '/login.html', 2000);
                     return;
                 }
-    
+
                 const selectedMethodElement = document.querySelector('.withdrawal-selected');
-                if (!selectedMethodElement) {
-                    alert('Please select a withdrawal method');
-                    return;
-                }
-    
-                const selectedMethod = selectedMethodElement.dataset.method;
+                const selectedMethod = selectedMethodElement?.dataset.method;
                 const amount = parseFloat(document.getElementById('withdrawal-amount').value);
-    
-                if (!amount || isNaN(amount)) {
-                    alert('Please enter a valid withdrawal amount');
+
+                // Validate form
+                const validationErrors = validateWithdrawalForm(selectedMethod, amount);
+                if (validationErrors.length > 0) {
+                    showError(validationErrors.join('\n'));
                     return;
                 }
-    
-                if (amount < 50) {
-                    alert('Minimum withdrawal is $50');
-                    return;
-                }
-    
+
+                // Collect method-specific details
                 let details = {};
-    
+                
                 if (selectedMethod === 'crypto') {
-                    const cryptoType = document.getElementById('crypto-type').value;
-                    const walletAddress = document.getElementById('wallet-address').value;
-    
-                    if (!walletAddress) {
-                        alert('Please enter your wallet address');
-                        return;
-                    }
-    
-                    details = { cryptoType, walletAddress };
+                    details = {
+                        cryptoType: document.getElementById('crypto-type').value,
+                        walletAddress: sanitizeInput(document.getElementById('wallet-address').value)
+                    };
                 } else if (selectedMethod === 'bank') {
-                    const bankName = document.getElementById('bank-name').value;
-                    const accountNumber = document.getElementById('account-number').value;
-                    const accountName = document.getElementById('account-name').value;
-    
-                    if (!bankName || !accountNumber || !accountName) {
-                        alert('Please fill in all bank details');
-                        return;
-                    }
-    
-                    details = { bankName, accountNumber, accountName };
+                    details = {
+                        bankName: sanitizeInput(document.getElementById('bank-name').value),
+                        accountNumber: sanitizeInput(document.getElementById('account-number').value),
+                        accountName: sanitizeInput(document.getElementById('account-name').value)
+                    };
                 } else if (selectedMethod === 'paypal') {
-                    const paypalEmail = document.getElementById('paypal-email').value;
-    
-                    if (!paypalEmail) {
-                        alert('Please enter your PayPal email');
-                        return;
-                    }
-    
-                    details = { paypalEmail };
+                    details = {
+                        paypalEmail: sanitizeInput(document.getElementById('paypal-email').value)
+                    };
                 }
-    
-                const success = await recordWithdrawal(currentUser.uid, selectedMethod, details, amount);
-    
-                if (success) {
-                    document.getElementById('modal-method').textContent = selectedMethod.charAt(0).toUpperCase() + selectedMethod.slice(1);
-                    document.getElementById('modal-amount').textContent = '$' + formatNumberWithCommas(amount.toFixed(2));
-                    document.getElementById('modal-date').textContent = new Date().toLocaleDateString();
-    
-                    showModal();
-                    loadUserBalanceData(currentUser.uid);
-                    document.getElementById('withdrawal-amount').value = '';
+
+                // Process withdrawal
+                setButtonLoading(true);
+                
+                try {
+                    const result = await processWithdrawal(currentUser.uid, selectedMethod, details, amount);
+
+                    if (result.success) {
+                        // Update local balance immediately
+                        currentBalance = result.newBalance;
+                        document.getElementById('available-balance').textContent = '$' + formatNumberWithCommas(result.newBalance);
+                        
+                        // Show success modal
+                        showSuccessModal(selectedMethod, amount, result.newBalance, result.transactionId);
+                        
+                        // Clear form
+                        document.getElementById('withdrawal-amount').value = '';
+                        
+                        // Reset method-specific fields
+                        if (selectedMethod === 'crypto') {
+                            document.getElementById('wallet-address').value = '';
+                        } else if (selectedMethod === 'bank') {
+                            document.getElementById('bank-name').value = '';
+                            document.getElementById('account-number').value = '';
+                            document.getElementById('account-name').value = '';
+                        } else if (selectedMethod === 'paypal') {
+                            document.getElementById('paypal-email').value = '';
+                        }
+                        
+                    } else {
+                        showError(result.error || 'Failed to process withdrawal. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Withdrawal processing error:', error);
+                    showError('An unexpected error occurred. Please try again later.');
+                } finally {
+                    setButtonLoading(false);
+                }
+            });
+
+            // Real-time amount validation
+            document.getElementById('withdrawal-amount').addEventListener('input', function() {
+                const amount = parseFloat(this.value);
+                const submitButton = document.getElementById('submit-withdrawal');
+                
+                if (amount > currentBalance) {
+                    this.style.borderColor = '#ef4444';
+                    submitButton.disabled = true;
+                    submitButton.classList.add('opacity-50');
                 } else {
-                    alert('Failed to process withdrawal request. Please try again later.');
+                    this.style.borderColor = '';
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50');
                 }
             });
         });
